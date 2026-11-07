@@ -2,6 +2,13 @@
 
 This repository is an **architecture scaffold**, not a working component library.
 
+## Documentation and communication
+
+- Write all public documentation, README files, code comments, API references, examples, issue descriptions, pull-request descriptions, and release notes in **English**.
+- Keep technical terminology and exported symbol names consistent across documentation, Vanilla APIs, and React adapters.
+- Update the relevant documentation in the same change as a public API or architecture change.
+- Do not describe planned behavior as implemented, or imply that an unreleased package is available.
+
 ## Dependency boundaries
 
 - Implement reusable behavior in **Vanilla TypeScript** using built-in browser APIs first.
