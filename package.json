@@ -7,9 +7,12 @@
     "packages/*"
   ],
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build:demo:envelope": "tsc packages/interactive/src/components/dom/envelope-reveal/envelope-reveal.ts --strict --target ES2022 --module ESNext --lib ES2022,DOM --outDir examples/vanilla/envelope-reveal"
   },
   "devDependencies": {
+    "@types/react": "^19.2.0",
+    "react": "^19.2.0",
     "typescript": "^5.9.3"
   }
 }

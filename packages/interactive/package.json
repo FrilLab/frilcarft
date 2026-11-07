@@ -3,5 +3,17 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "FrilCraft interactive component scaffold (unreleased)"
+  "description": "FrilCraft interactive component prototypes (unreleased)",
+  "peerDependencies": {
+    "react": "^18.2.0 || ^19.0.0",
+    "three": "^0.180.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "three": {
+      "optional": true
+    }
+  }
 }

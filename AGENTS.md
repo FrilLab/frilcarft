@@ -1,6 +1,6 @@
 # FrilCraft contributor rules
 
-This repository is an **architecture scaffold**, not a working component library.
+This repository is an **early prototype**, not a published component library. The Envelope Reveal experiment is implemented, but the architecture and consumer packaging remain under validation.
 
 ## Documentation and communication
 

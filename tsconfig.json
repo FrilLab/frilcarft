@@ -8,14 +8,15 @@
     ],
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
     "strict": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,
-    "skipLibCheck": true,
-    "types": []
+    "skipLibCheck": true
   },
   "include": [
-    "packages/interactive/src/**/*.ts"
+    "packages/interactive/src/**/*.ts",
+    "packages/interactive/src/**/*.tsx"
   ],
   "exclude": [
     "node_modules",

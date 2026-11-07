@@ -4,7 +4,7 @@
 
 FrilCraft is an open-source project for building reusable, independently usable interactive web components. Its goal is to turn interaction patterns developed and validated in FrilStudio into components that can be adopted in other projects.
 
-> **Status: architecture scaffold (not released).** This repository currently contains only an initial directory structure and architecture contracts. No working components, Playground, npm package, or shadcn Registry are available yet.
+> **Status: early prototype (not released).** The repository includes an architecture scaffold and a working Vanilla Envelope Reveal experiment. The optional React adapter still needs consumer validation. No published npm package, hosted Playground, or shadcn Registry is available yet.
 
 ## Design principles
 
@@ -45,11 +45,20 @@ docs/
 
 Git does not track empty directories, so some locations contain only `.gitkeep` placeholders. The presence of a directory does **not** mean its feature has been implemented.
 
+## First experiment
+
+- [Envelope Reveal component](docs/components/envelope-reveal.md)
+- [Standalone Vanilla demo](examples/vanilla/envelope-reveal/)
+- [Video recording plan](docs/content/001-envelope-reveal.md)
+
+The demo uses native TypeScript and CSS without Canvas, Three.js, Motion, or GSAP.
+
 ## Development
 
 ```bash
 npm install
 npm run typecheck
+npm run build:demo:envelope
 ```
 
 At this stage, `typecheck` performs static checks on the initial TypeScript contracts only. Runtime and browser tests, along with build and publishing pipelines, will be added during implementation.
