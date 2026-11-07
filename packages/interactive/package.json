@@ -1,0 +1,7 @@
+{
+  "name": "@frillab/interactive",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "FrilCraft interactive component scaffold (unreleased)"
+}
