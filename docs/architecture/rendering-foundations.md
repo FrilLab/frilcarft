@@ -103,6 +103,6 @@ These directories are boundaries, **not** a commitment to many npm packages.
 - How much of direct WebGL2 / WebGPU to implement, based on real performance evidence.
 - Whether to use one npm package with subpath exports or several packages at release time.
 - Playground editor schema, source-code generation and shadcn Registry details.
-- Open-source license selection before distributing the implementation.
+- Distribution packaging and third-party asset attribution; the repository source is licensed under MIT (see the root LICENSE).
 
 **Next slice:** implement the Vanilla Stage registry and View lifecycle with tests; then add a minimal Three.js backend and a React adapter. Avoid releasing an API until the behavior is validated.

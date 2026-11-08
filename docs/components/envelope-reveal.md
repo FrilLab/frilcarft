@@ -61,4 +61,4 @@ React is required only for the optional wrapper; the Vanilla component does not 
 
 ## Release blockers
 
-This is an experiment, not a published release. Add React consumer tests, packaging/exports, and an open-source license before publishing.
+This is an experiment, not a published release. Add React consumer tests and packaging/exports before publishing. The source is licensed under MIT (see the root LICENSE).

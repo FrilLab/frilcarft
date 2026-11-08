@@ -78,4 +78,4 @@ Public documentation, code comments, API references, issues, and pull-request de
 
 ## License
 
-An open-source license has **not yet been selected**. Until a license is added, do not assume that the code in this repository may be reused or redistributed without separate permission.
+FrilCraft is licensed under the [MIT License](LICENSE). Copyright (c) 2026 FrilLab. You may use, modify, and redistribute the code, including in commercial projects, subject to the license's copyright and permission notice requirements.

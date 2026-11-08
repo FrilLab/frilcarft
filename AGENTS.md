@@ -8,6 +8,7 @@ This repository is an **early prototype**, not a published component library. Th
 - Keep technical terminology and exported symbol names consistent across documentation, Vanilla APIs, and React adapters.
 - Update the relevant documentation in the same change as a public API or architecture change.
 - Do not describe planned behavior as implemented, or imply that an unreleased package is available.
+- Preserve the root MIT license and its copyright/permission notice in copies or substantial portions of the software. Check licenses for any third-party code and media before including them.
 
 ## Dependency boundaries
 
