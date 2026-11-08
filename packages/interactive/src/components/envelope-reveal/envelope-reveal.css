@@ -1,16 +1,22 @@
-/* Envelope Reveal — isolated styles, no global resets or CSS framework. */
 .fc-envelope {
   --fc-envelope-color: #d9bda7;
   --fc-envelope-accent: #966d78;
   --fc-envelope-paper: #fffdf8;
   --fc-envelope-ink: #433b40;
+  position: relative;
   width: min(100%, 430px);
   margin-inline: auto;
   color: var(--fc-envelope-ink);
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: Georgia, "Times New Roman", serif;
   text-align: center;
 }
-.fc-envelope *, .fc-envelope *::before, .fc-envelope *::after { box-sizing: border-box; }
+
+.fc-envelope *,
+.fc-envelope *::before,
+.fc-envelope *::after {
+  box-sizing: border-box;
+}
+
 .fc-envelope__trigger {
   display: block;
   position: relative;
@@ -25,11 +31,13 @@
   perspective: 850px;
   -webkit-tap-highlight-color: transparent;
 }
+
 .fc-envelope__trigger:focus-visible {
   outline: 3px solid var(--fc-envelope-accent);
   outline-offset: 7px;
   border-radius: 9px;
 }
+
 .fc-envelope__back {
   position: absolute;
   inset: 34% 4% 9%;
@@ -37,6 +45,7 @@
   background: var(--fc-envelope-color);
   box-shadow: 0 24px 38px -19px rgb(55 35 37 / 34%), 0 2px 5px rgb(60 35 40 / 14%);
 }
+
 .fc-envelope__paper {
   position: absolute;
   display: flex;
@@ -53,27 +62,31 @@
   background: var(--fc-envelope-paper);
   box-shadow: 0 1px 9px rgb(70 43 39 / 10%);
   transform: translateY(25%) scale(.96);
-  transition: transform 900ms cubic-bezier(.2,.8,.2,1) 0ms, box-shadow 900ms ease;
+  transition: transform 900ms cubic-bezier(.2,.8,.2,1), box-shadow 900ms ease;
   will-change: transform;
 }
+
 .fc-envelope__eyebrow {
   display: block;
   color: var(--fc-envelope-accent);
   font: 600 clamp(7px, 1.9vw, 10px)/1.4 system-ui, sans-serif;
   letter-spacing: .2em;
 }
+
 .fc-envelope__title {
   display: block;
   font-size: clamp(19px, 5vw, 29px);
   line-height: 1.12;
   font-weight: normal;
 }
+
 .fc-envelope__message {
   display: block;
   max-width: 22ch;
   font: 400 clamp(9px, 2vw, 12px)/1.55 system-ui, sans-serif;
   color: #746b6a;
 }
+
 .fc-envelope__pocket {
   position: absolute;
   inset: 34% 4% 9%;
@@ -82,17 +95,21 @@
   clip-path: polygon(0 0, 50% 48%, 100% 0, 100% 100%, 0 100%);
   border-radius: 0 0 11px 11px;
 }
+
 .fc-envelope__pocket::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(115deg, rgb(255 255 255 / 20%), transparent 54%);
   clip-path: polygon(0 0, 50% 48%, 100% 0, 100% 100%, 0 100%);
 }
+
 .fc-envelope__flap {
   position: absolute;
-  top: 34%; left: 4%;
-  width: 92%; height: 33%;
+  top: 34%;
+  left: 4%;
+  width: 92%;
+  height: 33%;
   z-index: 5;
   clip-path: polygon(0 0, 100% 0, 50% 100%);
   background: color-mix(in srgb, var(--fc-envelope-color) 93%, white);
@@ -101,12 +118,15 @@
   backface-visibility: hidden;
   transition: transform 700ms cubic-bezier(.2,.7,.15,1);
 }
+
 .fc-envelope__seal {
   position: absolute;
   display: grid;
   place-items: center;
-  top: 57%; left: 50%;
-  width: 43px; height: 43px;
+  top: 57%;
+  left: 50%;
+  width: 43px;
+  height: 43px;
   z-index: 6;
   transform: translate(-50%, -50%);
   border: 3px solid rgb(255 255 255 / 20%);
@@ -117,17 +137,23 @@
   font: italic 24px/1 Georgia, serif;
   transition: transform 400ms ease, opacity 350ms ease;
 }
-.fc-envelope[data-state='open'] .fc-envelope__flap { transform: rotateX(180deg); }
-.fc-envelope[data-state='open'] .fc-envelope__paper {
+
+.fc-envelope[data-state="open"] .fc-envelope__flap {
+  transform: rotateX(180deg);
+}
+
+.fc-envelope[data-state="open"] .fc-envelope__paper {
   transform: translateY(-40%) scale(1.02);
   box-shadow: 0 15px 28px rgb(60 35 40 / 13%);
   transition-delay: 330ms;
 }
-.fc-envelope[data-state='open'] .fc-envelope__seal {
+
+.fc-envelope[data-state="open"] .fc-envelope__seal {
   transform: translate(-50%, -50%) scale(.6);
   opacity: 0;
   pointer-events: none;
 }
+
 .fc-envelope__hint {
   margin: 4px 0 0;
   color: #827679;
@@ -135,17 +161,25 @@
   letter-spacing: .14em;
   text-transform: uppercase;
 }
+
 .fc-envelope__screen-reader:not([hidden]) {
   position: absolute;
-  width: 1px; height: 1px;
+  width: 1px;
+  height: 1px;
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
 }
-.fc-envelope__screen-reader[hidden] { display: none; }
+
+.fc-envelope__screen-reader[hidden] {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .fc-envelope__paper, .fc-envelope__flap, .fc-envelope__seal {
-    transition-duration: 0.01ms !important;
+  .fc-envelope__paper,
+  .fc-envelope__flap,
+  .fc-envelope__seal {
+    transition-duration: .01ms !important;
     transition-delay: 0ms !important;
     will-change: auto;
   }

@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "rootDir": "./src",
+    "declarationDir": "./dist/types"
+  },
+  "include": [
+    "src/components/envelope-reveal/**/*.ts",
+    "src/components/envelope-reveal/**/*.tsx"
+  ],
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.test.tsx"
+  ]
+}
