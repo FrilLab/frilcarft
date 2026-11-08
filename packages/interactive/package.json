@@ -10,8 +10,8 @@
   ],
   "exports": {
     "./envelope-reveal": {
-      "types": "./src/components/envelope-reveal/index.ts",
       "development": "./src/components/envelope-reveal/index.ts",
+      "types": "./dist/types/components/envelope-reveal/index.d.ts",
       "import": "./dist/envelope-reveal.js",
       "default": "./dist/envelope-reveal.js"
     },

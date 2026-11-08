@@ -9,10 +9,11 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspace @frillab/playground",
-    "build": "npm run build:library && npm run build:playground && npm run build:consumer",
+    "build": "npm run build:library && npm run build:playground && npm run build:consumer && npm run build:source-consumer",
     "build:library": "npm run build --workspace @frillab/interactive",
     "build:playground": "npm run build --workspace @frillab/playground",
     "build:consumer": "vite build --config tests/consumers/react-vite/vite.config.ts && node tests/consumers/react-vite/verify-build.mjs",
+    "build:source-consumer": "node tests/consumers/source-vite/build.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "preview": "npm run preview --workspace @frillab/playground"

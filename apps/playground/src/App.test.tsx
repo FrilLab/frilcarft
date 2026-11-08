@@ -17,6 +17,7 @@ describe("Playground", () => {
     expect(screen.getByRole("navigation", { name: "Components" })).toHaveTextContent("Envelope Reveal");
     expect(screen.getByRole("button", { name: "Open the letter" })).toBeInTheDocument();
     expect(document.querySelector(".fc-envelope__message")).toHaveTextContent("A little something, just for you.");
+    expect(screen.getByText("Click the envelope to open it")).toBeInTheDocument();
   });
 
   it("updates the preview immediately and reset restores component defaults", async () => {
@@ -30,37 +31,45 @@ describe("Playground", () => {
 
     fireEvent.change(screen.getByLabelText("Envelope color"), { target: { value: "#123456" } });
     expect(document.querySelector(".fc-envelope")).toHaveStyle({ "--fc-envelope-color": "#123456" });
+    expect(screen.getByRole("tabpanel")).toHaveTextContent('envelopeColor={"#123456"}');
 
     await user.click(screen.getByRole("button", { name: /Reset/ }));
     expect(screen.getByText("You're invited")).toBeInTheDocument();
     expect(document.querySelector(".fc-envelope")).toHaveStyle({ "--fc-envelope-color": "#d9bda7" });
   });
 
-  it("generates valid usage TSX with escaped current strings", async () => {
+  it("generates valid copied-source TSX for current text and workspace TSX for the private package", async () => {
     const user = userEvent.setup();
     render(<App />);
-    const titleValue = 'Sam said "hello" \\ again';
-    const messageValue = "First line\nSecond line with 'quotes' and \\";
 
-    await user.clear(screen.getByLabelText("Title"));
-    await user.type(screen.getByLabelText("Title"), titleValue);
-    await user.clear(screen.getByLabelText("Message"));
-    await user.type(screen.getByLabelText("Message"), messageValue);
+    const initialCode = screen.getByRole("tabpanel").textContent ?? "";
+    expect(initialCode).toContain('import { EnvelopeReveal } from "./components/envelope-reveal";');
+    expect(initialCode).toContain('import "./components/envelope-reveal/envelope-reveal.css";');
+    expect(initialCode).toContain("<EnvelopeReveal />");
+
+    const titleValue = 'Sam said "hello" \\ again — こんにちは';
+    const messageValue = "First line\nSecond line with 'quotes' and \\\nThird line 😀";
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: titleValue } });
+    fireEvent.change(screen.getByLabelText("Message"), { target: { value: messageValue } });
 
     const code = screen.getByRole("tabpanel").textContent ?? "";
     expect(code).toContain(`title={${JSON.stringify(titleValue)}}`);
     expect(code).toContain(`message={${JSON.stringify(messageValue)}}`);
-    expect(code).toContain("@frillab/interactive/envelope-reveal");
     expect(code).not.toContain('title={"You\'re invited"}');
-
-    const compiled = ts.transpileModule(code, {
+    expect(ts.transpileModule(code, {
       compilerOptions: { jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
       reportDiagnostics: true,
-    });
-    expect(compiled.diagnostics?.filter(({ category }) => category === ts.DiagnosticCategory.Error)).toHaveLength(0);
+    }).diagnostics?.filter(({ category }) => category === ts.DiagnosticCategory.Error)).toHaveLength(0);
+
+    await user.click(screen.getByRole("tab", { name: "Workspace Usage" }));
+    const workspaceCode = screen.getByRole("tabpanel").textContent ?? "";
+    expect(workspaceCode).toContain('from "@frillab/interactive/envelope-reveal"');
+    expect(workspaceCode).toContain('import "@frillab/interactive/envelope-reveal.css";');
+    expect(workspaceCode).toContain(`title={${JSON.stringify(titleValue)}}`);
+    expect(workspaceCode).toContain("private and unpublished");
   });
 
-  it("copies usage code and the actual implementation files with license", async () => {
+  it("shows and copies each actual source file separately, including the MIT license", async () => {
     const user = userEvent.setup();
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", {
@@ -69,21 +78,25 @@ describe("Playground", () => {
     });
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: "Copy usage code" }));
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Usage code copied."));
-    expect(writeText.mock.calls[0][0]).toContain('import { EnvelopeReveal } from "@frillab/interactive/envelope-reveal";');
+    await user.click(screen.getByRole("tab", { name: "Source Files" }));
+    expect(screen.getByText(/Copy all files into src\/components\/envelope-reveal/)).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Source file EnvelopeReveal.tsx" })).toHaveTextContent("export function EnvelopeReveal");
+    expect(screen.getByRole("region", { name: "Source file index.ts" })).toHaveTextContent("./EnvelopeReveal.js");
+    expect(screen.getByRole("region", { name: "Source file envelope-reveal.css" })).toHaveTextContent(".fc-envelope__trigger");
+    expect(screen.getByRole("region", { name: "Source file LICENSE" })).toHaveTextContent("Copyright (c) 2026 FrilLab");
+    expect(screen.queryByText(/@frillab\/interactive/)).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("tab", { name: /Component source/ }));
-    const source = screen.getByRole("tabpanel").textContent ?? "";
-    expect(source).toContain("===== EnvelopeReveal.tsx =====");
-    expect(source).toContain("===== envelope-reveal.css =====");
-    expect(source).toContain(".fc-envelope__trigger");
-    expect(source).toContain("===== LICENSE (MIT) =====");
-    expect(source).toContain("Copyright (c) 2026 FrilLab");
-
-    await user.click(screen.getByRole("button", { name: "Copy component source" }));
-    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Component source copied."));
-    expect(writeText).toHaveBeenLastCalledWith(source);
+    const files = [
+      ["EnvelopeReveal.tsx", "export function EnvelopeReveal"],
+      ["index.ts", "./EnvelopeReveal.js"],
+      ["envelope-reveal.css", ".fc-envelope__trigger"],
+      ["LICENSE", "Copyright (c) 2026 FrilLab"],
+    ];
+    for (const [filename, content] of files) {
+      await user.click(screen.getByRole("button", { name: `Copy ${filename}` }));
+      expect(writeText.mock.calls.at(-1)?.[0]).toContain(content);
+    }
+    expect(writeText.mock.calls.at(-1)?.[0]).toContain("Permission is hereby granted");
   });
 
   it("shows an error state when clipboard access is rejected", async () => {
@@ -94,7 +107,7 @@ describe("Playground", () => {
     });
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: "Copy usage code" }));
+    await user.click(screen.getByRole("button", { name: "Copy local source usage" }));
 
     await waitFor(() => {
       expect(screen.getByRole("status")).toHaveTextContent("Copy failed. Select the code in the panel and copy it manually.");

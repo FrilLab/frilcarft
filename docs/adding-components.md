@@ -1,10 +1,10 @@
 # Adding a component
 
-This guide describes the working Envelope Reveal workflow. Keep a new component self-contained in `packages/interactive` and register its controls, preview, code generator, and source files in the Playground catalog.
+This guide describes the current React component workflow. Keep each component's implementation and public files in `packages/interactive`, then make one explicit Playground catalog registration. The Playground preview imports the library component; its usage snippets and source files are separately configured in that registration.
 
-## 1. Implement the component
+## 1. Create the component source
 
-Create a folder under `packages/interactive/src/components/<component-name>/`. Keep the React implementation, stylesheet, and barrel together:
+Add a directory under `packages/interactive/src/components/<component-name>/` containing its React implementation, stylesheet when needed, and `index.ts` barrel:
 
 ```text
 packages/interactive/src/components/<component-name>/
@@ -13,49 +13,65 @@ packages/interactive/src/components/<component-name>/
   index.ts
 ```
 
-Implement the public interface in React + TypeScript. Keep DOM components independent of Three.js, Canvas, and Stage. Import CSS as a separate package subpath so applications can choose where to load it.
+Export the props interface and component from the barrel. Use React + TypeScript for the public component API. React owns markup and lifecycle; use CSS and native browser behavior for DOM interactions. Keep DOM components independent of Canvas, Stage, the Playground, analytics, and remote services.
 
-## 2. Define public properties
+## 2. Expose the package entrypoint
 
-Export a props interface from the component file and re-export the component and type from `index.ts`. Prefer explicit, optional props with defaults inside the component. Use native controls and text rendering; avoid `innerHTML` and extra animation dependencies.
+Add explicit JavaScript and CSS subpaths to `packages/interactive/package.json`. Point the `development` condition to the component source and the normal import/default conditions to built output. Point the `types` condition to the declaration emitted in `dist/types/`.
 
-## 3. Build the package entry
+Add the component JavaScript entry to `packages/interactive/vite.config.ts`, its TypeScript files to `packages/interactive/tsconfig.build.json`, and any emitted static files to `packages/interactive/scripts/copy-assets.mjs`. These lists are explicit by design. React is a peer dependency and must stay external in the library build.
 
-Add the component export and stylesheet subpath to `packages/interactive/package.json`. Add its JavaScript entry in `packages/interactive/vite.config.ts`, include its source in `packages/interactive/tsconfig.build.json`, and extend `packages/interactive/scripts/copy-assets.mjs` to copy its stylesheet into `dist`. Keep each component's export and CSS subpath explicit so the Envelope Reveal export stays independent.
+The Playground resolves the development condition for live source updates. Production applications resolve the built package entry. Import the CSS subpath separately so consumers can choose where to load the stylesheet.
 
-Package `development` export conditions point Vite to workspace source for HMR. The default/import conditions point to built files in `dist`. `npm run build` builds the library before the Playground and consumer fixture.
+## 3. Register the preview and controls
 
-## 4. Register it in the catalog
+Add one typed registration in `apps/playground/src/catalog.tsx`. Configure the stable ID, display name, description, category, component name, package imports, copied-source imports, actual component preview, default property values, and controls. Control kinds currently include text, textarea, color, number, and boolean.
 
-Add one typed entry to `apps/playground/src/catalog.tsx` with a stable ID, display name, description, category, component preview, default property values, and controls. The `registerComponent` helper checks the control keys against the property type. Use the existing text, textarea, and color control kinds where they fit.
+For example, the registration explicitly provides `componentName: "ComponentName"`, its `workspaceImportPath`, its `workspaceCssImportPath`, and a `Preview` imported from the package. Put component-specific preview badges, optional hint text, and feature notes in that same registration. The shared shell reads this metadata and does not name individual components.
 
-The catalog entry provides `generateUsageCode(props)` and `sourceText`. Keep this component-specific wiring in the catalog entry; shared Playground code handles navigation, controls, rendering, and copying.
+Use a control for each value that should be editable and included in generated examples. The generic generator omits properties equal to registered defaults and undefined optional values, and serializes strings, finite numbers, and booleans as JSX expressions. It does not evaluate generated code.
 
-## 5. Generate usage code
+## 4. Configure usage-code generation
 
-Build the usage snippet from the current property values using the existing `createUsageCode` helper. It serializes values as JavaScript string literals, escapes line separators, omits properties that match their defaults, and uses the package's explicit workspace subpath. Keep the note in the UI that the private workspace package is not published. Do not evaluate generated code.
+Set `componentName`, `workspaceImportPath`, and `workspaceCssImportPath` for private workspace examples. Set `sourceImportPath` and `sourceCssImportPath` to the local paths that match the copied-file instructions. The registration uses the shared `createUsageCode` formatter for both targets.
 
-If the component has different value types, extend the narrow typed helper and add focused escaping/formatting tests before registering it.
+The Playground labels these outputs separately:
 
-## 6. Expose source files for copying
+- **Workspace Usage** imports `@frillab/interactive` and is only usable inside this private repository workspace.
+- **Copied Source Usage** imports files from the consumer's project and is the example to use outside this repository while the package remains unpublished.
 
-Import the actual `.tsx`, barrel, and license files with Vite's `?raw` query in `catalog.tsx`. Import CSS with the Playground's `?sourceText` query, handled by `apps/playground/source-file-plugin.ts`; the plugin reads the current CSS file at build time without transforming or duplicating it. This avoids hand-maintained source strings. Include instructions for each copied filename, all runtime dependencies, and the root MIT license notice. Do not expose a copy action unless it contains every file needed to use the component.
+Do not add an npm installation command for this private package.
 
-## 7. Add tests
+## 5. Expose the actual source files
 
-Add focused tests for the component's visible behavior, property updates, keyboard use, and StrictMode/unmount lifecycle. Add Playground tests for catalog display, preview updates, reset, generated usage code (including quotes, backslashes, and newlines), and clipboard contents for usage and source copy. Extend the consumer fixture to import the package export and stylesheet independently.
+Add each file needed to use the component to the registration's `sourceFiles` list. Import TypeScript and barrel files with Vite's `?raw` query. Import CSS with `?sourceText`, handled by `apps/playground/source-file-plugin.ts`, which reads the current source file in development and production builds. Import the root `LICENSE` for the MIT notice. Do not hand-copy implementation strings into the Playground.
 
-## 8. Verify locally
+Set `sourceInstructions` to explain the target directory, assumptions in the usage snippet, and runtime dependencies. Show and copy each source file separately. Include the stylesheet, barrels, helper files, assets, and license needed by that component; do not expose Playground-only dependencies or imports.
 
-From the repository root, run:
+For the current component, copy `EnvelopeReveal.tsx`, `index.ts`, `envelope-reveal.css`, and `LICENSE` into `src/components/envelope-reveal/`. The generated example imports from `./components/envelope-reveal` and imports its stylesheet separately.
+
+## 6. Add focused validation
+
+Add tests for the component's behavior, accessibility, prop updates, and lifecycle. Add Playground tests for actual preview rendering, live control updates, reset, source-file copy actions, and generated TSX. Use a small synthetic registration to verify that the generic generator honors component names, both import paths, default omission, string escaping, numeric props, and boolean props.
+
+Verify both consumer paths:
+
+- `tests/consumers/react-vite/` builds the built workspace package and its CSS export.
+- `tests/consumers/source-vite/build.mjs` copies the actual component files into a temporary isolated React app and builds local source imports without the workspace package.
+
+Confirm DOM component output does not import Three.js. Do not add Stage/View runtime behavior for DOM components.
+
+## 7. Run the repository checks
+
+From a clean checkout, run:
 
 ```bash
-npm install
-npm run dev
+npm ci
 npm run typecheck
 npm run test
 npm run build
+npm run dev
 npm run preview
 ```
 
-Check the package build, Playground build, and `tests/consumers/react-vite` output. Confirm DOM-only package output has no Three.js import and the stylesheet is emitted. Update the README, component documentation, and architecture notes in the same change. Do not add a second component as part of this guide's reference implementation.
+Run the dev and preview servers long enough to confirm they serve the Playground; preview requires a production build first. Update the README and component documentation alongside public API or workflow changes. Keep the component catalog explicit and do not add discovery systems, a Registry dependency, FrilAdd, or another component solely to exercise the workflow.
