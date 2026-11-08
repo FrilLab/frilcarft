@@ -46,6 +46,8 @@ See [rendering foundations](docs/architecture/rendering-foundations.md) before c
 
 - Keep package exports, build entries, declarations, copied CSS assets, Playground registration, and source-consumer validation explicit for each component.
 - Playground registrations provide the component name, workspace and local-source import paths, defaults, controls, preview metadata, and the real files needed for source copy.
+- The gallery must list every catalog registration and each card must link to `/components/<id>`. Keep all component-specific page data in the catalog; do not hardcode component names in shared page components.
+- Use static gallery artwork where available, not a live mount of every component; GPU components must not initialize merely because the gallery is open.
 - Keep source files sourced from the component directory with Vite raw-file imports; do not duplicate implementation text in the Playground.
 - Label workspace package usage as private and unpublished. External usage examples must import copied local source files and their stylesheet.
 - Preserve the root MIT license in source copies. Validate both the built package consumer and the isolated source consumer with `npm run build`.

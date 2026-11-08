@@ -8,6 +8,36 @@ import { componentCatalog } from "./catalog.js";
 describe("Playground", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    window.history.replaceState(null, "", "/components/envelope-reveal");
+  });
+
+  it("opens with the registered component gallery and navigates to details and back", async () => {
+    const user = userEvent.setup();
+    window.history.replaceState(null, "", "/");
+    render(<App />);
+    expect(screen.getByRole("heading", { name: "Explore components." })).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "Explore Envelope Reveal" })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "Open the letter" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("link", { name: "Explore Envelope Reveal" }));
+    expect(window.location.pathname).toBe("/components/envelope-reveal");
+    expect(screen.getByRole("button", { name: "Open the letter" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("link", { name: "All components" }));
+    expect(window.location.pathname).toBe("/");
+    expect(screen.getByRole("heading", { name: "Explore components." })).toBeInTheDocument();
+  });
+
+  it("loads direct component paths and shows a useful not-found state for unknown URLs", () => {
+    const view = render(<App />);
+    expect(screen.getByRole("button", { name: "Open the letter" })).toBeInTheDocument();
+
+    window.history.replaceState(null, "", "/components/unknown-component");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+    expect(screen.getByRole("heading", { name: "Component not found." })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back to all components" })).toHaveAttribute("href", "/");
+
+    view.unmount();
   });
 
   it("lists Envelope Reveal and renders the package component in its preview", () => {

@@ -1,6 +1,6 @@
 # Adding a component
 
-This guide describes the current React component workflow. Keep each component's implementation and public files in `packages/interactive`, then make one explicit Playground catalog registration. The Playground preview imports the library component; its usage snippets and source files are separately configured in that registration.
+This guide describes the current React component workflow. Keep each component's implementation and public files in `packages/interactive`, then make one explicit Playground catalog registration. The Playground home page lists all registrations and each card links to its component detail page. The detail preview imports the library component; its usage snippets and source files are separately configured in that registration.
 
 ## 1. Create the component source
 
@@ -45,6 +45,8 @@ Do not add an npm installation command for this private package.
 ## 5. Expose the actual source files
 
 Add each file needed to use the component to the registration's `sourceFiles` list. Import TypeScript and barrel files with Vite's `?raw` query. Import CSS with `?sourceText`, handled by `apps/playground/source-file-plugin.ts`, which reads the current source file in development and production builds. Import the root `LICENSE` for the MIT notice. Do not hand-copy implementation strings into the Playground.
+
+Optionally set `previewImage` to a static image placed in `apps/playground/public/previews/`. The gallery uses a name-based fallback when no image is provided and deliberately does not mount every component. Registered items automatically appear at `/` and `/components/<id>` without adding routes manually.
 
 Set `sourceInstructions` to explain the target directory, assumptions in the usage snippet, and runtime dependencies. Show and copy each source file separately. Include the stylesheet, barrels, helper files, assets, and license needed by that component; do not expose Playground-only dependencies or imports.
 
