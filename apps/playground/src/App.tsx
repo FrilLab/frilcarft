@@ -8,12 +8,11 @@ import { SiteLink, usePathname } from "./navigation.js";
  * Gallery and component detail both read from the same catalog.
  */
 function App() {
-  const pathname = usePathname().replace(/\\/+$/, "") || "/";
-  const match = /^\\/components\\/([a-z0-9-]+)$/.exec(pathname);
-  const selectedComponent = match
-    ? componentCatalog.find((component) => component.id === match[1])
+  const segments = usePathname().split("/").filter(Boolean);
+  const onGallery = segments.length === 0;
+  const selectedComponent = segments.length === 2 && segments[0] === "components"
+    ? componentCatalog.find((component) => component.id === segments[1])
     : undefined;
-  const onGallery = pathname === "/";
 
   return (
     <div className="playground-shell">
