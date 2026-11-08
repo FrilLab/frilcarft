@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ts from "typescript";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -32,8 +32,10 @@ describe("Playground", () => {
     const view = render(<App />);
     expect(screen.getByRole("button", { name: "Open the letter" })).toBeInTheDocument();
 
-    window.history.replaceState(null, "", "/components/unknown-component");
-    window.dispatchEvent(new PopStateEvent("popstate"));
+    act(() => {
+      window.history.replaceState(null, "", "/components/unknown-component");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
     expect(screen.getByRole("heading", { name: "Component not found." })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Back to all components" })).toHaveAttribute("href", "/");
 
