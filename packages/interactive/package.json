@@ -3,18 +3,31 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "FrilCraft interactive component prototypes (unreleased)",
-  "peerDependencies": {
-    "react": "^18.2.0 || ^19.0.0",
-    "three": "^0.180.0"
-  },
-  "peerDependenciesMeta": {
-    "react": {
-      "optional": true
+  "description": "Private React interactive component prototypes for FrilCraft",
+  "files": [
+    "dist",
+    "src/components/envelope-reveal"
+  ],
+  "exports": {
+    "./envelope-reveal": {
+      "types": "./src/components/envelope-reveal/index.ts",
+      "development": "./src/components/envelope-reveal/index.ts",
+      "import": "./dist/envelope-reveal.js",
+      "default": "./dist/envelope-reveal.js"
     },
-    "three": {
-      "optional": true
+    "./envelope-reveal.css": {
+      "development": "./src/components/envelope-reveal/envelope-reveal.css",
+      "default": "./dist/envelope-reveal.css"
     }
   },
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.build.json && node scripts/copy-assets.mjs"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0 || ^19.0.0"
+  },
+  "sideEffects": [
+    "**/*.css"
+  ],
   "license": "MIT"
 }

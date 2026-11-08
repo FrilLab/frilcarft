@@ -2,79 +2,67 @@
 
 **Craft interactive experiences for the web.**
 
-FrilCraft is an open-source project for building reusable, independently usable interactive web components. Its goal is to turn interaction patterns developed and validated in FrilStudio into components that can be adopted in other projects.
-
-> **Status: early prototype (not released).** The repository includes an architecture scaffold and a working Vanilla Envelope Reveal experiment. The optional React adapter still needs consumer validation. No published npm package, hosted Playground, or shadcn Registry is available yet.
-
-## Design principles
-
-- **Vanilla-first:** Implement framework-independent behavior in Vanilla TypeScript using native browser APIs.
-- **React optional:** Provide React APIs as adapters over the Vanilla runtime. Vanilla consumers must not need React.
-- **Native Web APIs first:** Prefer CSS, the Web Animations API (WAAPI), Pointer Events, ResizeObserver, IntersectionObserver, and `requestAnimationFrame`. Motion, GSAP, and React Three Fiber (R3F) are not default dependencies.
-- **Three.js only when needed:** Use Three.js selectively for 3D components. DOM-only effects must not pull it into their dependency graph.
-- **Stage owns rendering:** A Stage owns at most one Canvas and one Renderer. Views and Scenes must never allocate their own Canvas.
-- **View-first:** A View maps an HTML element to a rendering region managed by its Stage. Replacing a Scene must not recreate the Canvas.
-- **Independent distribution:** Prioritize individually usable components, source copying, and separate Vanilla/React entrypoints. A shadcn-compatible Registry will be an optional distribution method.
-- **No hidden telemetry:** Distributed components must not include usage tracking or hidden calls to FrilCraft servers.
+FrilCraft is an early prototype for reusable interactive React components. The first complete workflow uses Envelope Reveal in a Vite Playground: edit its properties, preview the library component, and copy React usage or the component source. The `@frillab/interactive` workspace package is private and is not published to npm.
 
 ## Repository structure
 
 ```text
-apps/
-  playground/              # Future gallery, visual controls, and code generation
-packages/
-  interactive/
-    src/
-      core/
-        stage/              # Stage ownership and lifecycle contracts
-        view/               # View registration and bounds contracts
-      vanilla/              # Framework-independent entrypoint (planned)
-      adapters/react/       # React adapter (planned)
-      backends/three/       # Optional Three.js backend (planned)
-      components/dom/       # Native DOM interactions (planned)
-      components/three/     # Three.js scenes (planned)
-registry/                   # Optional shadcn Registry (planned)
-examples/
-  vanilla/
-  react/
-tests/
-  consumers/                # Standalone consumer-app tests (planned)
-docs/
-  architecture/
+apps/playground/           React + TypeScript Playground
+packages/interactive/      Reusable React components and package build
+tests/consumers/            Independent React consumer build
+docs/                       Architecture and contributor documentation
+registry/                   Reserved; no Registry is implemented
 ```
 
-Git does not track empty directories, so some locations contain only `.gitkeep` placeholders. The presence of a directory does **not** mean its feature has been implemented.
+Envelope Reveal lives in `packages/interactive/src/components/envelope-reveal/`. The Playground imports the package workspace entry; Vite resolves its development condition to the component source for HMR. Production builds use the package's built export. The Playground imports the exported stylesheet separately.
 
-## First experiment
+## Requirements
 
-- [Envelope Reveal component](docs/components/envelope-reveal.md)
-- [Standalone Vanilla demo](examples/vanilla/envelope-reveal/)
-- [Video recording plan](docs/content/001-envelope-reveal.md)
+- Node.js 22.12 or newer
+- npm 10 or newer
 
-The demo uses native TypeScript and CSS without Canvas, Three.js, Motion, or GSAP.
-
-## Development
+## Development commands
 
 ```bash
 npm install
+npm run dev
+npm run build
 npm run typecheck
-npm run build:demo:envelope
+npm run test
+npm run preview
 ```
 
-At this stage, `typecheck` performs static checks on the initial TypeScript contracts only. Runtime and browser tests, along with build and publishing pipelines, will be added during implementation.
+- `dev` starts the Playground with Vite HMR at <http://localhost:5173>.
+- `build` builds the reusable package, Playground, and independent consumer fixture.
+- `typecheck` checks maintained package, Playground, consumer, and test TypeScript without emitting files.
+- `test` runs the focused React component and Playground tests with Vitest.
+- `preview` serves the built Playground at <http://localhost:4173>; run `npm run build` first.
 
-## Planned implementation order
+## Using Envelope Reveal
 
-1. Implement and test Stage/View ownership rules and the Vanilla lifecycle.
-2. Validate a Three.js backend that renders multiple Views through one Canvas.
-3. Add a React adapter that consumes the same Vanilla runtime.
-4. Build the first standalone component and Playground, then introduce optional Registry distribution.
+```tsx
+import { EnvelopeReveal } from "@frillab/interactive/envelope-reveal";
+import "@frillab/interactive/envelope-reveal.css";
 
-See [Rendering Foundations](docs/architecture/rendering-foundations.md) for design decisions and pre-implementation acceptance criteria.
+export function Invitation() {
+  return (
+    <EnvelopeReveal
+      title="You're invited"
+      message="Join us for something special."
+      eyebrow="A LETTER FOR YOU"
+      envelopeColor="#d9bda7"
+      accentColor="#966d78"
+      paperColor="#fffdf8"
+    />
+  );
+}
+```
 
-## Documentation language
+The import above works inside this npm workspace. The package is private and unpublished, so external projects can use the Playground's **Component source** copy workflow instead. See [Envelope Reveal](docs/components/envelope-reveal.md) for the current API and [Adding components](docs/adding-components.md) for the implemented catalog workflow.
 
-Public documentation, code comments, API references, issues, and pull-request descriptions are written in **English** to keep the project accessible to international contributors.
+## Architecture
+
+React is the primary component interface. CSS and browser APIs handle DOM-only interactions. The Stage/View rendering contracts remain documented for future GPU components, but no Three.js runtime is implemented. See [Rendering Foundations](docs/architecture/rendering-foundations.md).
 
 ## License
 

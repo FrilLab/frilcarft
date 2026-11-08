@@ -1,64 +1,48 @@
 # Envelope Reveal
 
-**Status:** working Vanilla prototype; React consumer integration and package publishing are not yet validated.
+An accessible React envelope interaction that opens to reveal a customizable letter. The implementation uses React, CSS, and native button behavior. It has no animation-library, Canvas, Three.js, or Playground runtime dependency.
 
-An accessible envelope that opens to reveal a letter. Vanilla TypeScript + CSS, with no runtime animation library or canvas. The optional React wrapper delegates to the same engine.
+## Preview
 
-## Local preview
+Run `npm install` and `npm run dev` from the repository root, then open <http://localhost:5173>. The Playground provides text and color controls, live preview, usage-code generation, and a source-copy action.
 
-```bash
-npm install
-npm run build:demo:envelope
-python3 -m http.server 4173
-```
+## Package usage
 
-Open <http://localhost:4173/examples/vanilla/envelope-reveal/>.
-
-## Vanilla
-
-```ts
-import { createEnvelopeReveal } from "./envelope-reveal.js";
-import "./envelope-reveal.css";
-
-const letter = createEnvelopeReveal(document.getElementById("envelope")!, {
-  title: "You're invited",
-  envelopeColor: "#d9bda7",
-});
-letter.setOpen(true);
-letter.setOptions({ title: "Save the date" });
-letter.dispose();
-```
-
-Copy the source and CSS into your application. The package is private and **not yet available from npm**.
-
-## Optional React
-
-The wrapper source is at `packages/interactive/src/adapters/react/EnvelopeReveal.tsx`. The host component imports the CSS explicitly.
+The following workspace imports are available within this repository. The package is private and has not been published to npm.
 
 ```tsx
-import { EnvelopeReveal } from "./EnvelopeReveal";
-import "./envelope-reveal.css";
+import { EnvelopeReveal } from "@frillab/interactive/envelope-reveal";
+import "@frillab/interactive/envelope-reveal.css";
 
 <EnvelopeReveal
   title="You're invited"
-  message="Join us for something special."
+  message="A little something, just for you."
+  eyebrow="A LETTER FOR YOU"
+  envelopeColor="#d9bda7"
   accentColor="#966d78"
+  paperColor="#fffdf8"
 />
 ```
 
-React is required only for the optional wrapper; the Vanilla component does not import it. The wrapper uses uncontrolled open/close state: `initiallyOpen` is only an initial value.
+The component accepts:
 
-## API and accessibility
+- `title`, `message`, and `eyebrow` for the letter content.
+- `envelopeColor`, `accentColor`, and `paperColor` for its appearance.
+- `initiallyOpen` for its initial state. Later clicks toggle the state.
+- `onOpenChange(open)` when the user opens or closes the letter.
+- `className` and `style` for the outer wrapper.
 
-- `createEnvelopeReveal(host, options)`: create an independent instance.
-- `setOpen(boolean)`, `toggle()`, `isOpen`: control and inspect state.
-- `setOptions(partialOptions)`: update text, colors and change callback.
-- `dispose()`: remove owned DOM and listeners.
-- Options: title, message, eyebrow, envelopeColor, accentColor, paperColor, initiallyOpen and onOpenChange.
-- Uses a native button with ARIA expanded state, keyboard interaction, a readable letter region, and reduced-motion support.
-- Text is applied using textContent, never raw HTML.
-- No Canvas or renderer is allocated.
+All props are optional. The defaults are: “You're invited”, “A little something, just for you.”, “A LETTER FOR YOU”, `#d9bda7`, `#966d78`, and `#fffdf8`.
 
-## Release blockers
+## Accessibility and lifecycle
 
-This is an experiment, not a published release. Add React consumer tests and packaging/exports before publishing. The source is licensed under MIT (see the root LICENSE).
+- A native `<button>` provides mouse, Enter, and Space activation.
+- `aria-expanded`, `aria-controls`, and a changing accessible button label communicate the open state.
+- The revealed content is exposed as a labeled region when open; decorative envelope layers are hidden from assistive technology.
+- Text is rendered as React text, so user-provided strings are not interpreted as HTML.
+- CSS transitions honor `prefers-reduced-motion` and the component remains fluid within its container.
+- React owns the component DOM and listeners. StrictMode setup/cleanup leaves one rendered component, and unmount removes it without retained resources.
+
+## Source copy
+
+The Playground's **Component source** view reads the real component, barrel, CSS, and MIT license from the repository at build time. It copies all labeled files together with the React dependency and stylesheet instructions. This is the supported path for projects outside the workspace while the package remains unpublished.

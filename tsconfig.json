@@ -12,14 +12,24 @@
     "strict": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": [
+      "vite/client"
+    ]
   },
   "include": [
-    "packages/interactive/src/**/*.ts",
-    "packages/interactive/src/**/*.tsx"
+    "apps/**/*.ts",
+    "apps/**/*.tsx",
+    "packages/**/*.ts",
+    "packages/**/*.tsx",
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "vite.config.ts",
+    "vitest.config.ts"
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "**/dist/**"
   ]
 }
