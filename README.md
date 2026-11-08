@@ -16,6 +16,29 @@ docs/                             Architecture and contributor documentation
 
 The Playground preview imports the actual component from `packages/interactive`. Vite uses the package's development export for HMR and its built export in production. The component stylesheet is imported separately.
 
+## How the project connects
+
+The package is the source of truth for components; the Playground is a separate application that imports them. The catalog is a list of registered components, not another implementation.
+
+```text
+packages/interactive/src/components/envelope-reveal/
+    └── EnvelopeReveal.tsx + CSS        reusable implementation
+                    ↓
+apps/playground/src/catalog.tsx          registration and display metadata
+                    ↓
+apps/playground/src/ComponentGallery.tsx /       component gallery
+apps/playground/src/ComponentDetail.tsx          live editor and source copying
+                    ↓
+tests/consumers/                       verify real external usage
+```
+
+The Playground has two entry points:
+
+- `/` lists **all registered components** as cards.
+- `/components/envelope-reveal` opens Envelope Reveal's interactive detail view directly.
+
+Registering another component in the catalog automatically adds its card and detail URL. The gallery uses static preview artwork rather than running every component (important for future GPU components). See [Project Map](docs/architecture/project-map.md) and [Adding components](docs/adding-components.md).
+
 ## Requirements and development
 
 - Node.js 22.12 or newer

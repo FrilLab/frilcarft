@@ -48,6 +48,7 @@ interface ComponentDefinition<Props extends { [Key in keyof Props]: PlaygroundVa
   readonly sourceFiles: readonly SourceFile[];
   readonly sourceInstructions: string;
   readonly badges: readonly string[];
+  readonly previewImage?: string;
   readonly previewHint?: string;
   readonly previewFeatures?: readonly string[];
 }
@@ -60,6 +61,7 @@ export interface ComponentRegistration {
   readonly defaultProps: PlaygroundProps;
   readonly controls: readonly PlaygroundControl[];
   readonly badges: readonly string[];
+  readonly previewImage?: string;
   readonly previewHint?: string;
   readonly previewFeatures: readonly string[];
   readonly sourceFiles: readonly SourceFile[];
@@ -120,6 +122,7 @@ function registerComponent<Props extends { [Key in keyof Props]: PlaygroundValue
     defaultProps: definition.defaultProps,
     controls: definition.controls.map(({ key, label, kind }) => ({ key: String(key), label, kind })),
     badges: definition.badges,
+    previewImage: definition.previewImage,
     previewHint: definition.previewHint,
     previewFeatures: definition.previewFeatures ?? [],
     sourceFiles: definition.sourceFiles,
@@ -180,6 +183,7 @@ const envelopeReveal = registerComponent<EnvelopeRevealPlaygroundProps>({
   ],
   sourceInstructions: "Copy all files into src/components/envelope-reveal/. This usage example assumes it is in src/App.tsx. React 18 or 19 is required; no other runtime dependency is needed.",
   badges: ["React", "CSS motion"],
+  previewImage: "/previews/envelope-reveal.svg",
   previewHint: "Click the envelope to open it",
   previewFeatures: ["Keyboard accessible", "Reduced motion supported"],
 });
