@@ -1,24 +1,23 @@
 import { useMemo, useState } from "react";
 import { componentCatalog } from "./catalog.js";
-import type { ComponentRegistration } from "./catalog.js";
+import type { ComponentRegistration, PlaygroundProps, PlaygroundValue } from "./catalog.js";
 
-type CodeView = "usage" | "source";
+type CodeView = "copied-source-usage" | "workspace-usage" | "source-files";
 
 function App() {
   const [selectedId, setSelectedId] = useState(componentCatalog[0].id);
-  const [values, setValues] = useState<Record<string, string>>(componentCatalog[0].defaultProps);
-  const [codeView, setCodeView] = useState<CodeView>("usage");
+  const [values, setValues] = useState<PlaygroundProps>(componentCatalog[0].defaultProps);
+  const [codeView, setCodeView] = useState<CodeView>("copied-source-usage");
   const [copyStatus, setCopyStatus] = useState("");
 
   const selectedComponent = componentCatalog.find(({ id }) => id === selectedId) ?? componentCatalog[0];
   const usageCode = useMemo(
-    () => selectedComponent.generateUsageCode(values),
-    [selectedComponent, values],
+    () => selectedComponent.generateUsageCode(values, codeView === "workspace-usage" ? "workspace" : "source"),
+    [selectedComponent, values, codeView],
   );
-  const displayedCode = codeView === "usage" ? usageCode : selectedComponent.sourceText;
-  const copyLabel = codeView === "usage" ? "Copy usage code" : "Copy component source";
+  const isUsageView = codeView !== "source-files";
 
-  const updateProperty = (key: string, value: string) => {
+  const updateProperty = (key: string, value: PlaygroundValue) => {
     setValues((current) => ({ ...current, [key]: value }));
     setCopyStatus("");
   };
@@ -36,11 +35,25 @@ function App() {
 
   const copyCode = async () => {
     try {
-      await navigator.clipboard.writeText(displayedCode);
-      setCopyStatus(codeView === "usage" ? "Usage code copied." : "Component source copied.");
+      await navigator.clipboard.writeText(usageCode);
+      setCopyStatus(codeView === "workspace-usage" ? "Workspace usage copied." : "Copied-source usage copied.");
     } catch {
       setCopyStatus("Copy failed. Select the code in the panel and copy it manually.");
     }
+  };
+
+  const copySourceFile = async (path: string, content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopyStatus(`${path} copied.`);
+    } catch {
+      setCopyStatus(`Copy failed for ${path}. Select the file contents and copy them manually.`);
+    }
+  };
+
+  const setCodeViewAndClearStatus = (view: CodeView) => {
+    setCodeView(view);
+    setCopyStatus("");
   };
 
   return (
@@ -92,8 +105,7 @@ function App() {
               <p>{selectedComponent.description} Adjust the details and preview your changes instantly.</p>
             </div>
             <div className="heading-badges">
-              <span className="native-badge"><span aria-hidden="true">✦</span> CSS motion</span>
-              <span className="react-badge">◉ React</span>
+              {selectedComponent.badges.map((badge) => <span className="component-badge" key={badge}>{badge}</span>)}
             </div>
           </section>
 
@@ -101,21 +113,23 @@ function App() {
             <div className="preview-card">
               <div className="card-heading">
                 <div>
-                  <span className="card-kicker">CANVAS</span>
+                  <span className="card-kicker">PREVIEW</span>
                   <h2>Live preview</h2>
                 </div>
-                <span className="preview-state"><span /> Interactive</span>
+                <span className="preview-state">Preview</span>
               </div>
               <div className="preview-canvas">
                 <div className="canvas-glow" aria-hidden="true" />
                 <div className="preview-component">{selectedComponent.render(values)}</div>
-                <div className="canvas-caption"><span className="caption-line" /> Click the envelope to open it <span className="caption-line" /></div>
+                {selectedComponent.previewHint && (
+                  <div className="canvas-caption"><span className="caption-line" /> {selectedComponent.previewHint} <span className="caption-line" /></div>
+                )}
               </div>
-              <div className="preview-footer">
-                <span><span className="keyboard-icon" aria-hidden="true">↵</span> Keyboard accessible</span>
-                <span><span className="motion-icon" aria-hidden="true">◌</span> Reduced motion supported</span>
-                <span className="preview-size">Responsive preview</span>
-              </div>
+              {selectedComponent.previewFeatures.length > 0 && (
+                <div className="preview-footer">
+                  {selectedComponent.previewFeatures.map((feature) => <span key={feature}>{feature}</span>)}
+                </div>
+              )}
             </div>
 
             <aside className="controls-card" aria-labelledby="controls-title">
@@ -131,13 +145,14 @@ function App() {
 
               <div className="controls-list">
                 {selectedComponent.controls.map((control) => {
-                  const value = values[String(control.key)] ?? "";
+                  const value = values[String(control.key)];
+                  const stringValue = typeof value === "string" ? value : value === undefined ? "" : String(value);
                   return (
                     <label className={`property-control property-control--${control.kind}`} key={String(control.key)}>
                       <span className="control-label">{control.label}</span>
                       {control.kind === "textarea" ? (
                         <textarea
-                          value={value}
+                          value={stringValue}
                           rows={3}
                           maxLength={240}
                           onChange={(event) => updateProperty(String(control.key), event.target.value)}
@@ -148,15 +163,31 @@ function App() {
                             className="color-input"
                             type="color"
                             aria-label={control.label}
-                            value={value}
+                            value={stringValue}
                             onChange={(event) => updateProperty(String(control.key), event.target.value)}
                           />
-                          <span className="color-value">{value.toUpperCase()}</span>
+                          <span className="color-value">{stringValue.toUpperCase()}</span>
                         </span>
+                      ) : control.kind === "boolean" ? (
+                        <input
+                          type="checkbox"
+                          checked={value === true}
+                          onChange={(event) => updateProperty(String(control.key), event.target.checked)}
+                        />
+                      ) : control.kind === "number" ? (
+                        <input
+                          type="number"
+                          value={typeof value === "number" ? value : ""}
+                          step="any"
+                          onChange={(event) => {
+                            const nextValue = event.target.value === "" ? undefined : event.target.valueAsNumber;
+                            updateProperty(String(control.key), typeof nextValue === "number" && Number.isFinite(nextValue) ? nextValue : undefined);
+                          }}
+                        />
                       ) : (
                         <input
                           type="text"
-                          value={value}
+                          value={stringValue}
                           maxLength={120}
                           onChange={(event) => updateProperty(String(control.key), event.target.value)}
                         />
@@ -175,43 +206,74 @@ function App() {
                 <span className="card-kicker">TAKE IT WITH YOU</span>
                 <h2 id="code-title">Use it in your project</h2>
               </div>
-              <button className="copy-button" type="button" onClick={copyCode}>
-                <span aria-hidden="true">▢</span> {copyLabel}
-              </button>
+              {isUsageView && (
+                <button className="copy-button" type="button" onClick={copyCode}>
+                  <span aria-hidden="true">▢</span> {codeView === "workspace-usage" ? "Copy workspace usage" : "Copy local source usage"}
+                </button>
+              )}
             </div>
             <div className="code-toolbar">
               <div className="code-tabs" role="tablist" aria-label="Code type">
                 <button
-                  id="usage-tab"
-                  className={codeView === "usage" ? "is-selected" : ""}
+                  id="copied-source-usage-tab"
+                  className={codeView === "copied-source-usage" ? "is-selected" : ""}
                   type="button"
                   role="tab"
-                  aria-selected={codeView === "usage"}
+                  aria-selected={codeView === "copied-source-usage"}
                   aria-controls="code-panel"
-                  onClick={() => { setCodeView("usage"); setCopyStatus(""); }}
+                  onClick={() => setCodeViewAndClearStatus("copied-source-usage")}
                 >
-                  <span aria-hidden="true">⌘</span> Usage
+                  Copied Source Usage
                 </button>
                 <button
-                  id="source-tab"
-                  className={codeView === "source" ? "is-selected" : ""}
+                  id="workspace-usage-tab"
+                  className={codeView === "workspace-usage" ? "is-selected" : ""}
                   type="button"
                   role="tab"
-                  aria-selected={codeView === "source"}
+                  aria-selected={codeView === "workspace-usage"}
                   aria-controls="code-panel"
-                  onClick={() => { setCodeView("source"); setCopyStatus(""); }}
+                  onClick={() => setCodeViewAndClearStatus("workspace-usage")}
                 >
-                  <span aria-hidden="true">{ }</span> Component source
+                  Workspace Usage
+                </button>
+                <button
+                  id="source-files-tab"
+                  className={codeView === "source-files" ? "is-selected" : ""}
+                  type="button"
+                  role="tab"
+                  aria-selected={codeView === "source-files"}
+                  aria-controls="code-panel"
+                  onClick={() => setCodeViewAndClearStatus("source-files")}
+                >
+                  Source Files
                 </button>
               </div>
-              <span className="code-language">{codeView === "usage" ? "TSX" : "SOURCE FILES"}</span>
+              <span className="code-language">{isUsageView ? "TSX" : `${selectedComponent.sourceFiles.length} FILES`}</span>
             </div>
-            <div className="code-panel" id="code-panel" role="tabpanel" aria-labelledby={codeView === "usage" ? "usage-tab" : "source-tab"}>
-              <pre><code>{displayedCode}</code></pre>
+            <div className={`code-panel${isUsageView ? "" : " code-panel--files"}`} id="code-panel" role="tabpanel" aria-labelledby={`${codeView}-tab`}>
+              {isUsageView ? (
+                <pre><code>{usageCode}</code></pre>
+              ) : (
+                <div className="source-files-list">
+                  <p className="source-instructions">{selectedComponent.sourceInstructions}</p>
+                  {selectedComponent.sourceFiles.map((file) => (
+                    <section className="source-file" key={file.path} aria-label={`Source file ${file.path}`}>
+                      <div className="source-file-heading">
+                        <strong>{file.path}</strong>
+                        <button type="button" onClick={() => copySourceFile(file.path, file.content)}>Copy {file.path}</button>
+                      </div>
+                      <pre><code>{file.content}</code></pre>
+                    </section>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="code-footer">
-              <span aria-live="polite" role="status">{copyStatus || "Workspace import shown. The package is private and not published to npm."}</span>
-              {codeView === "source" && <span className="source-dependencies">React 18 or 19 · CSS file included · MIT license included</span>}
+              <span aria-live="polite" role="status">{copyStatus || (codeView === "workspace-usage"
+                ? "Workspace Usage imports the private, unpublished @frillab/interactive package."
+                : codeView === "copied-source-usage"
+                  ? "Copied Source Usage imports local component files and is the external usage example."
+                  : "Copy the listed files individually; the LICENSE file preserves the MIT notice.")}</span>
             </div>
           </section>
 

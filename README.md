@@ -2,47 +2,57 @@
 
 **Craft interactive experiences for the web.**
 
-FrilCraft is an early prototype for reusable interactive React components. The first complete workflow uses Envelope Reveal in a Vite Playground: edit its properties, preview the library component, and copy React usage or the component source. The `@frillab/interactive` workspace package is private and is not published to npm.
+FrilCraft is an early prototype for reusable React components. Envelope Reveal is the first complete workflow: a React + TypeScript component, a Vite Playground preview, editable properties, generated usage examples, and individual source-file copying. The `@frillab/interactive` package is private and unpublished. For projects outside this workspace, use the copied-source workflow.
 
 ## Repository structure
 
 ```text
-apps/playground/           React + TypeScript Playground
-packages/interactive/      Reusable React components and package build
-tests/consumers/            Independent React consumer build
-docs/                       Architecture and contributor documentation
-registry/                   Reserved; no Registry is implemented
+apps/playground/                  React + TypeScript Playground
+packages/interactive/             Reusable React components and package build
+tests/consumers/react-vite/       Built-package React consumer validation
+tests/consumers/source-vite/      Isolated copied-source consumer validation
+docs/                             Architecture and contributor documentation
 ```
 
-Envelope Reveal lives in `packages/interactive/src/components/envelope-reveal/`. The Playground imports the package workspace entry; Vite resolves its development condition to the component source for HMR. Production builds use the package's built export. The Playground imports the exported stylesheet separately.
+The Playground preview imports the actual component from `packages/interactive`. Vite uses the package's development export for HMR and its built export in production. The component stylesheet is imported separately.
 
-## Requirements
+## Requirements and development
 
 - Node.js 22.12 or newer
 - npm 10 or newer
 
-## Development commands
-
 ```bash
-npm install
+npm ci
 npm run dev
-npm run build
 npm run typecheck
 npm run test
+npm run build
 npm run preview
 ```
 
-- `dev` starts the Playground with Vite HMR at <http://localhost:5173>.
-- `build` builds the reusable package, Playground, and independent consumer fixture.
-- `typecheck` checks maintained package, Playground, consumer, and test TypeScript without emitting files.
-- `test` runs the focused React component and Playground tests with Vitest.
-- `preview` serves the built Playground at <http://localhost:4173>; run `npm run build` first.
+- `dev` starts the Playground at <http://localhost:5173> with Vite HMR.
+- `typecheck` checks package, Playground, consumer, and test TypeScript.
+- `test` runs focused component, Playground, and usage-generator tests.
+- `build` builds the library, Playground, built-package consumer, and isolated source consumer.
+- `preview` serves the production Playground at <http://localhost:4173>; run `npm run build` first.
 
-## Using Envelope Reveal
+## Use Envelope Reveal outside this workspace
+
+Copy the four files from the Playground's **Source Files** view into `src/components/envelope-reveal/`:
+
+```text
+src/components/envelope-reveal/
+  EnvelopeReveal.tsx
+  index.ts
+  envelope-reveal.css
+  LICENSE
+```
+
+Then use the local source path from `src/App.tsx`:
 
 ```tsx
-import { EnvelopeReveal } from "@frillab/interactive/envelope-reveal";
-import "@frillab/interactive/envelope-reveal.css";
+import { EnvelopeReveal } from "./components/envelope-reveal";
+import "./components/envelope-reveal/envelope-reveal.css";
 
 export function Invitation() {
   return (
@@ -58,12 +68,14 @@ export function Invitation() {
 }
 ```
 
-The import above works inside this npm workspace. The package is private and unpublished, so external projects can use the Playground's **Component source** copy workflow instead. See [Envelope Reveal](docs/components/envelope-reveal.md) for the current API and [Adding components](docs/adding-components.md) for the implemented catalog workflow.
+The component requires React 18 or 19 and has no other runtime dependency. Keep the included MIT license notice with copies and redistributions. The Playground also shows **Workspace Usage** for examples inside this repository; those imports rely on the private package and are not an external installation path.
+
+See [Envelope Reveal](docs/components/envelope-reveal.md) for the API and [Adding components](docs/adding-components.md) for the implemented contribution workflow.
 
 ## Architecture
 
-React is the primary component interface. CSS and browser APIs handle DOM-only interactions. The Stage/View rendering contracts remain documented for future GPU components, but no Three.js runtime is implemented. See [Rendering Foundations](docs/architecture/rendering-foundations.md).
+React is the primary component interface. CSS and browser APIs handle DOM-only interactions. Stage/View rendering contracts remain documented for future GPU components; no Three.js runtime is implemented. See [Rendering Foundations](docs/architecture/rendering-foundations.md).
 
 ## License
 
-FrilCraft is licensed under the [MIT License](LICENSE). Copyright (c) 2026 FrilLab. You may use, modify, and redistribute the code, including in commercial projects, subject to the license's copyright and permission notice requirements.
+FrilCraft is licensed under the [MIT License](LICENSE). Copyright (c) 2026 FrilLab. Copies and substantial portions must retain the copyright and permission notice.

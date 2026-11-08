@@ -41,3 +41,12 @@ See [rendering foundations](docs/architecture/rendering-foundations.md) before c
 - Complete public behavior, docs, cleanup, and focused tests together.
 - Verify independent React consumption and CSS access for distributed components. Do not treat a subpath export alone as proof of tree shaking.
 - Distributed components must not contain hidden analytics or tracking calls.
+
+## Current component distribution workflow
+
+- Keep package exports, build entries, declarations, copied CSS assets, Playground registration, and source-consumer validation explicit for each component.
+- Playground registrations provide the component name, workspace and local-source import paths, defaults, controls, preview metadata, and the real files needed for source copy.
+- Keep source files sourced from the component directory with Vite raw-file imports; do not duplicate implementation text in the Playground.
+- Label workspace package usage as private and unpublished. External usage examples must import copied local source files and their stylesheet.
+- Preserve the root MIT license in source copies. Validate both the built package consumer and the isolated source consumer with `npm run build`.
+- FrilAdd is a separate future project. Do not add a CLI, remote fetching, package installation, or Registry dependency here.

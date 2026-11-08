@@ -7,27 +7,49 @@ import componentIndexSource from "../../../packages/interactive/src/components/e
 import componentStyles from "../../../packages/interactive/src/components/envelope-reveal/envelope-reveal.css?sourceText";
 import licenseText from "../../../LICENSE?raw";
 
-type StringProps = Record<string, string>;
+export type PlaygroundValue = string | number | boolean | undefined;
+export type PlaygroundProps = Record<string, PlaygroundValue>;
 
-export type ControlKind = "text" | "textarea" | "color";
+export type ControlKind = "text" | "textarea" | "color" | "number" | "boolean";
 
-export interface PlaygroundControl<Props extends StringProps = StringProps> {
+export interface PlaygroundControl<Props extends object = PlaygroundProps> {
   readonly key: keyof Props;
   readonly label: string;
   readonly kind: ControlKind;
 }
 
-interface ComponentDefinition<Props extends StringProps> {
+export interface UsageCodeDefinition<Props extends { [Key in keyof Props]: PlaygroundValue } = PlaygroundProps> {
+  readonly componentName: string;
+  readonly importPath: string;
+  readonly cssImportPath: string;
+  readonly defaultProps: Props;
+  readonly controls: readonly PlaygroundControl<Props>[];
+  readonly usageNote?: string;
+}
+
+export interface SourceFile {
+  readonly path: string;
+  readonly content: string;
+}
+
+interface ComponentDefinition<Props extends { [Key in keyof Props]: PlaygroundValue }> {
   readonly id: string;
   readonly name: string;
   readonly description: string;
   readonly category: string;
-  readonly importPath: string;
-  readonly cssImportPath: string;
+  readonly componentName: string;
+  readonly workspaceImportPath: string;
+  readonly workspaceCssImportPath: string;
+  readonly sourceImportPath: string;
+  readonly sourceCssImportPath: string;
   readonly Preview: ComponentType<Props>;
   readonly defaultProps: Props;
   readonly controls: readonly PlaygroundControl<Props>[];
-  readonly sourceText: string;
+  readonly sourceFiles: readonly SourceFile[];
+  readonly sourceInstructions: string;
+  readonly badges: readonly string[];
+  readonly previewHint?: string;
+  readonly previewFeatures?: readonly string[];
 }
 
 export interface ComponentRegistration {
@@ -35,11 +57,15 @@ export interface ComponentRegistration {
   readonly name: string;
   readonly description: string;
   readonly category: string;
-  readonly defaultProps: StringProps;
+  readonly defaultProps: PlaygroundProps;
   readonly controls: readonly PlaygroundControl[];
-  readonly render: (props: StringProps) => ReactNode;
-  readonly generateUsageCode: (props: StringProps) => string;
-  readonly sourceText: string;
+  readonly badges: readonly string[];
+  readonly previewHint?: string;
+  readonly previewFeatures: readonly string[];
+  readonly sourceFiles: readonly SourceFile[];
+  readonly sourceInstructions: string;
+  readonly render: (props: PlaygroundProps) => ReactNode;
+  readonly generateUsageCode: (props: PlaygroundProps, target: "workspace" | "source") => string;
 }
 
 export function serializeString(value: string): string {
@@ -48,23 +74,33 @@ export function serializeString(value: string): string {
     .replace(/\u2029/g, "\\u2029");
 }
 
-export function createUsageCode<Props extends StringProps>(
-  definition: Pick<ComponentDefinition<Props>, "importPath" | "cssImportPath" | "defaultProps" | "controls">,
+function serializeJsxValue(value: PlaygroundValue): string {
+  if (typeof value === "string") return `{${serializeString(value)}}`;
+  if (typeof value === "boolean") return `{${value}}`;
+  if (typeof value === "number" && Number.isFinite(value)) return `{${String(value)}}`;
+  throw new TypeError(`Unsupported JSX property value: ${String(value)}`);
+}
+
+/** Generate a usage example from explicit component and prop metadata. */
+export function createUsageCode<Props extends { [Key in keyof Props]: PlaygroundValue }>(
+  definition: UsageCodeDefinition<Props>,
   props: Props,
 ): string {
-  const changedProps = definition.controls
-    .filter(({ key }) => props[key] !== definition.defaultProps[key])
-    .map(({ key }) => `      ${String(key)}={${serializeString(props[key])}}`);
+  const changedProps = definition.controls.flatMap(({ key }) => {
+    const value = props[key];
+    if (value === undefined || value === definition.defaultProps[key]) return [];
+    return [`      ${String(key)}=${serializeJsxValue(value)}`];
+  });
 
   const component = changedProps.length === 0
-    ? "    <EnvelopeReveal />"
-    : ["    <EnvelopeReveal", ...changedProps, "    />"].join("\n");
+    ? `    <${definition.componentName} />`
+    : [`    <${definition.componentName}`, ...changedProps, "    />"].join("\n");
 
   return [
-    `import { EnvelopeReveal } from ${serializeString(definition.importPath)};`,
+    `import { ${definition.componentName} } from ${serializeString(definition.importPath)};`,
     `import ${serializeString(definition.cssImportPath)};`,
     "",
-    "// Workspace import: @frillab/interactive is private and is not published to npm.",
+    ...(definition.usageNote ? [`// ${definition.usageNote}`, ""] : []),
     "export function Example() {",
     "  return (",
     component,
@@ -73,7 +109,7 @@ export function createUsageCode<Props extends StringProps>(
   ].join("\n");
 }
 
-function registerComponent<Props extends StringProps>(
+function registerComponent<Props extends { [Key in keyof Props]: PlaygroundValue }>(
   definition: ComponentDefinition<Props>,
 ): ComponentRegistration {
   return {
@@ -83,9 +119,22 @@ function registerComponent<Props extends StringProps>(
     category: definition.category,
     defaultProps: definition.defaultProps,
     controls: definition.controls.map(({ key, label, kind }) => ({ key: String(key), label, kind })),
+    badges: definition.badges,
+    previewHint: definition.previewHint,
+    previewFeatures: definition.previewFeatures ?? [],
+    sourceFiles: definition.sourceFiles,
+    sourceInstructions: definition.sourceInstructions,
     render: (props) => createElement(definition.Preview, props as Props),
-    generateUsageCode: (props) => createUsageCode(definition, props as Props),
-    sourceText: definition.sourceText,
+    generateUsageCode: (props, target) => createUsageCode({
+      componentName: definition.componentName,
+      importPath: target === "workspace" ? definition.workspaceImportPath : definition.sourceImportPath,
+      cssImportPath: target === "workspace" ? definition.workspaceCssImportPath : definition.sourceCssImportPath,
+      defaultProps: definition.defaultProps,
+      controls: definition.controls,
+      usageNote: target === "workspace"
+        ? "Workspace usage only: @frillab/interactive is private and unpublished."
+        : "Copied source usage: place the component files at the paths shown in the source instructions.",
+    }, props as Props),
   };
 }
 
@@ -103,34 +152,16 @@ const envelopeRevealDefaults: EnvelopeRevealPlaygroundProps = {
   paperColor: "#fffdf8",
 };
 
-const envelopeRevealSource = [
-  "FrilCraft Envelope Reveal source copy",
-  "",
-  "Copy each labeled block into a file with the shown name.",
-  "Dependencies: React 18 or 19. No animation library or Three.js is required.",
-  "Import envelope-reveal.css once from your application entrypoint.",
-  "Preserve the included MIT license notice when redistributing this source.",
-  "",
-  "===== EnvelopeReveal.tsx =====",
-  componentSource.trimEnd(),
-  "",
-  "===== index.ts =====",
-  componentIndexSource.trimEnd(),
-  "",
-  "===== envelope-reveal.css =====",
-  componentStyles.trimEnd(),
-  "",
-  "===== LICENSE (MIT) =====",
-  licenseText.trimEnd(),
-].join("\n");
-
 const envelopeReveal = registerComponent<EnvelopeRevealPlaygroundProps>({
   id: "envelope-reveal",
   name: "Envelope Reveal",
   description: "A letter animation built with React and CSS.",
   category: "Interactive",
-  importPath: "@frillab/interactive/envelope-reveal",
-  cssImportPath: "@frillab/interactive/envelope-reveal.css",
+  componentName: "EnvelopeReveal",
+  workspaceImportPath: "@frillab/interactive/envelope-reveal",
+  workspaceCssImportPath: "@frillab/interactive/envelope-reveal.css",
+  sourceImportPath: "./components/envelope-reveal",
+  sourceCssImportPath: "./components/envelope-reveal/envelope-reveal.css",
   Preview: EnvelopeReveal,
   defaultProps: envelopeRevealDefaults,
   controls: [
@@ -141,7 +172,16 @@ const envelopeReveal = registerComponent<EnvelopeRevealPlaygroundProps>({
     { key: "accentColor", label: "Accent color", kind: "color" },
     { key: "paperColor", label: "Paper color", kind: "color" },
   ],
-  sourceText: envelopeRevealSource,
+  sourceFiles: [
+    { path: "EnvelopeReveal.tsx", content: componentSource },
+    { path: "index.ts", content: componentIndexSource },
+    { path: "envelope-reveal.css", content: componentStyles },
+    { path: "LICENSE", content: licenseText },
+  ],
+  sourceInstructions: "Copy all files into src/components/envelope-reveal/. This usage example assumes it is in src/App.tsx. React 18 or 19 is required; no other runtime dependency is needed.",
+  badges: ["React", "CSS motion"],
+  previewHint: "Click the envelope to open it",
+  previewFeatures: ["Keyboard accessible", "Reduced motion supported"],
 });
 
 export const componentCatalog: readonly ComponentRegistration[] = [envelopeReveal];
