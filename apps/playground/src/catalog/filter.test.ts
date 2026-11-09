@@ -96,8 +96,8 @@ describe("catalog metadata and filtering", () => {
   it("round trips shareable search, category, and repeated tag parameters", () => {
     const filters = { query: "  Envelope Reveal  ", category: "interaction" as const, tags: ["reveal" as const, "click" as const] };
     const serialized = serializeGalleryFilters(filters);
-    expect(serialized).toBe("q=Envelope+Reveal&category=interaction&tag=reveal&tag=click");
-    expect(parseGalleryFilters(`?${serialized}`)).toEqual({ query: "Envelope Reveal", category: "interaction", tags: ["reveal", "click"] });
+    expect(serialized).toBe("q=++Envelope+Reveal++&category=interaction&tag=reveal&tag=click");
+    expect(parseGalleryFilters(`?${serialized}`)).toEqual({ query: "  Envelope Reveal  ", category: "interaction", tags: ["reveal", "click"] });
     expect(parseGalleryFilters("?category=unknown&tag=bad&tag=reveal")).toEqual({ query: "", category: "all", tags: ["reveal"] });
   });
 });

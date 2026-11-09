@@ -83,8 +83,8 @@ export function parseGalleryFilters(search: string): GalleryFilters {
 
 export function serializeGalleryFilters(filters: GalleryFilters): string {
   const params = new URLSearchParams();
-  const query = filters.query.trim();
-  if (query) params.set("q", query);
+  // Preserve spaces while the user is typing; matching normalizes the query separately.
+  if (filters.query.trim()) params.set("q", filters.query);
   if (filters.category !== "all") params.set("category", filters.category);
   for (const tag of filters.tags) params.append("tag", tag);
   return params.toString();

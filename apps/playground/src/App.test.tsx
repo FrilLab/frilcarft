@@ -82,12 +82,20 @@ describe("Playground", () => {
     expect(screen.getByRole("button", { name: "Interaction" })).toHaveAttribute("aria-pressed", "false");
     expect(load).not.toHaveBeenCalled();
 
-    await user.type(screen.getByRole("searchbox", { name: "Find a component" }), " INVITATION ");
+    const search = screen.getByRole("searchbox", { name: "Find a component" });
+    await user.type(search, "INVITATION");
     expect(screen.getAllByRole("link", { name: "Explore Envelope Reveal" })).toHaveLength(1);
     expect(window.location.search).toContain("q=INVITATION");
     expect(load).not.toHaveBeenCalled();
 
-    await user.clear(screen.getByRole("searchbox", { name: "Find a component" }));
+    await user.clear(search);
+    await user.type(search, "Envelope Reveal");
+    expect(search).toHaveValue("Envelope Reveal");
+    expect(window.location.search).toContain("q=Envelope+Reveal");
+    expect(screen.getAllByRole("link", { name: "Explore Envelope Reveal" })).toHaveLength(1);
+    expect(load).not.toHaveBeenCalled();
+
+    await user.clear(search);
     const card = screen.getByRole("article");
     await user.click(within(card).getByRole("button", { name: "Reveal" }));
     expect(window.location.search).toBe("?tag=reveal");
