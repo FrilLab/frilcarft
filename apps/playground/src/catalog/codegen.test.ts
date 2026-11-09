@@ -64,4 +64,17 @@ describe("createUsageCode", () => {
     expect(code).not.toContain("enabled=");
     expect(code).not.toContain("optionalNote=");
   });
+
+  it("omits the stylesheet import when the component has no separate CSS file", () => {
+    const { cssImportPath: _cssImportPath, ...definition } = syntheticDefinition;
+    const code = createUsageCode(definition, {
+      caption: "Default caption",
+      count: 0,
+      enabled: false,
+      optionalNote: undefined,
+    });
+
+    expect(code).toContain('import { PosterCard } from "@example/poster-card";');
+    expect(code).not.toContain(".css");
+  });
 });

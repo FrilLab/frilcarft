@@ -6,10 +6,9 @@ export default defineConfig({
       entry: "src/components/envelope-reveal/index.ts",
       formats: ["es"],
       fileName: "envelope-reveal",
-      cssFileName: "envelope-reveal",
     },
     rollupOptions: {
-      external: ["react", "react/jsx-runtime"],
+      external: ["react", "react/jsx-runtime", "cn"],
     },
     outDir: "dist",
     emptyOutDir: true,

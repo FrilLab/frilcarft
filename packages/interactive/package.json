@@ -14,20 +14,16 @@
       "types": "./dist/types/components/envelope-reveal/index.d.ts",
       "import": "./dist/envelope-reveal.js",
       "default": "./dist/envelope-reveal.js"
-    },
-    "./envelope-reveal.css": {
-      "development": "./src/components/envelope-reveal/envelope-reveal.css",
-      "default": "./dist/envelope-reveal.css"
     }
   },
   "scripts": {
-    "build": "vite build && tsc -p tsconfig.build.json && node scripts/copy-assets.mjs"
+    "build": "vite build && tsc -p tsconfig.build.json"
+  },
+  "dependencies": {
+    "cn": "^0.5.2"
   },
   "peerDependencies": {
-    "react": "^18.2.0 || ^19.0.0"
+    "react": "^19.0.0"
   },
-  "sideEffects": [
-    "**/*.css"
-  ],
   "license": "MIT"
 }

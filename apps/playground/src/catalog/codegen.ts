@@ -28,10 +28,13 @@ export function createUsageCode<Props extends { [Key in keyof Props]: Playground
   const component = changedProps.length === 0
     ? `    <${definition.componentName} />`
     : [`    <${definition.componentName}`, ...changedProps, "    />"].join("\n");
+  const imports = [
+    `import { ${definition.componentName} } from ${serializeString(definition.importPath)};`,
+    ...(definition.cssImportPath ? [`import ${serializeString(definition.cssImportPath)};`] : []),
+  ];
 
   return [
-    `import { ${definition.componentName} } from ${serializeString(definition.importPath)};`,
-    `import ${serializeString(definition.cssImportPath)};`,
+    ...imports,
     "",
     ...(definition.usageNote ? [`// ${definition.usageNote}`, ""] : []),
     "export function Example() {",
@@ -47,7 +50,7 @@ export function registerComponent<Props extends { [Key in keyof Props]: Playgrou
 ): ComponentDetailRegistration {
   return {
     defaultProps: definition.defaultProps,
-    controls: definition.controls.map(({ key, label, kind }) => ({ key: String(key), label, kind })),
+    controls: definition.controls.map(({ key, label, description, kind }) => ({ key: String(key), label, description, kind })),
     previewHint: definition.previewHint,
     previewFeatures: definition.previewFeatures ?? [],
     sourceFiles: definition.sourceFiles,

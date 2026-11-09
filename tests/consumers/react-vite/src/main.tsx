@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { EnvelopeReveal } from "@frillab/interactive/envelope-reveal";
-import "@frillab/interactive/envelope-reveal.css";
+import "./consumer.css";
 
 const root = document.getElementById("root");
 
@@ -9,8 +9,8 @@ if (!root) {
 }
 
 createRoot(root).render(
-  <main style={{ maxWidth: 600, margin: "4rem auto", padding: "0 1rem" }}>
+  <main className="mx-auto max-w-2xl px-4 py-16">
     <h1>Independent React consumer</h1>
-    <EnvelopeReveal title="Consumer validation" message="This imports the built package and stylesheet." />
+    <EnvelopeReveal title="Consumer validation" message="This imports the built package with Tailwind CSS v4." />
   </main>,
 );

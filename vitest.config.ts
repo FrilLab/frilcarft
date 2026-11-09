@@ -1,9 +1,15 @@
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
+import { fileURLToPath } from "node:url";
 import { sourceFilePlugin } from "./apps/playground/source-file-plugin.js";
 
 export default defineConfig({
   plugins: [sourceFilePlugin(), react()],
+  resolve: {
+    alias: {
+      "@": fileURLToPath(new URL("./apps/playground/src", import.meta.url)),
+    },
+  },
   test: {
     environment: "jsdom",
     setupFiles: ["./tests/setup.ts"],

@@ -4,18 +4,18 @@
 
 - Working title: **I Built an Interactive Envelope with Zero Animation Libraries**
 - Format: vertical Shorts, 20–30 seconds
-- Main idea: show a reusable React interaction with CSS motion, without Three.js or an animation framework.
+- Main idea: show a reusable React interaction with Tailwind CSS v4 motion utilities, without Three.js or an animation framework.
 
 ## Shot list
 
 1. **0–3s:** Show the sealed envelope with “Watch this open.”
 2. **3–9s:** Click the seal and reveal the letter.
 3. **9–15s:** Change the color and text, then open the new design.
-4. **15–22s:** Show Copied Source Usage and the individually copied component files with “React + CSS”.
+4. **15–22s:** Show Copied Source Usage and the individually copied component files with “React + Tailwind”.
 5. **22–27s:** End on “FrilCraft · Envelope Reveal”.
 
 ## Description draft
 
-I built Envelope Reveal: an interactive letter component made with React and CSS. No GSAP, Motion, R3F, or Canvas required. Customize it in the FrilCraft Playground, then copy its source files and MIT license into your project.
+I built Envelope Reveal: an interactive letter component made with React 19 and Tailwind CSS v4. No animation library, R3F, or Canvas required. Customize it in the FrilCraft Playground, then copy its source files and MIT license into your project.
 
 Add a public demo URL and GitHub source link when publicly accessible. Only record original assets and audio with appropriate rights. Do not claim benchmark results that have not been measured.

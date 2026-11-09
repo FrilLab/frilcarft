@@ -29,13 +29,22 @@ const initialJavaScript = await Promise.all(
 );
 const initialCode = initialJavaScript.join("\n");
 assert.ok(!initialCode.includes("export interface EnvelopeRevealProps"), "Raw component source text leaked into the initial Gallery bundle");
-assert.ok(!initialCode.includes("fc-envelope__trigger"), "Envelope Reveal implementation leaked into the initial Gallery bundle");
-assert.ok(!/(?:from|import\()\s*["']three(?:\/|["'])/i.test(initialCode), "Three.js leaked into the initial Gallery bundle");
+assert.ok(!initialCode.includes("--fc-envelope-color"), "Envelope Reveal implementation leaked into the initial Gallery bundle");
+assert.ok(!/(?:from|import\()\s*["'](?:three(?:\/|["'])|@react-three\/(?:fiber|drei))/i.test(initialCode), "3D runtime dependencies leaked into the initial Gallery bundle");
+
+const reusableBundle = await readFile(join(appRoot, "../../packages/interactive/dist/envelope-reveal.js"), "utf8");
+assert.ok(!/(?:from|import\()\s*["'](?:radix-ui|@radix-ui\/)/i.test(reusableBundle), "Playground Radix dependencies leaked into the reusable component bundle");
+assert.ok(!reusableBundle.includes("components/ui/"), "Playground shadcn/ui source leaked into the reusable component bundle");
 
 const initialStylesheets = await Promise.all(
   [...initialFiles].filter((file) => file.endsWith(".css")).map((file) => readFile(join(dist, file), "utf8")),
 );
-assert.ok(!initialStylesheets.join("\n").includes(".fc-envelope__trigger"), "Component-specific CSS leaked into the initial Gallery stylesheets");
+const initialCss = initialStylesheets.join("\n");
+assert.match(initialCss, /perspective:\s*850px/, "Tailwind must scan the reusable component source and emit its perspective utility.");
+assert.match(initialCss, /clip-path:\s*polygon/, "Tailwind must emit the envelope geometry utilities.");
+assert.match(initialCss, /prefers-reduced-motion/, "Tailwind must emit reduced-motion utilities.");
+assert.match(initialCss, /\[data-state=open\]/, "Tailwind must emit the open-state envelope transforms.");
+assert.match(initialCss, /rotateX\(180deg\).*translateY\(-40%\)/, "Tailwind must preserve flap and letter movement transitions.");
 
 const dynamicDetails = entries.filter(([key, value]) => key.includes("/catalog/entries/") && value.isDynamicEntry);
 assert.ok(dynamicDetails.length > 0, "Component detail entries must be emitted dynamically");
@@ -43,10 +52,8 @@ assert.equal(new Set(dynamicDetails.map(([, value]) => value.file)).size, dynami
 const detailEntry = dynamicDetails.find(([key]) => key.endsWith("/catalog/entries/envelope-reveal.tsx"));
 assert.ok(detailEntry, "Envelope Reveal must be emitted as a dynamic detail entry");
 const detailCode = await readFile(join(dist, detailEntry[1].file), "utf8");
-assert.ok(detailCode.includes("fc-envelope__trigger"), "The lazy detail chunk must include the actual component implementation");
+assert.ok(detailCode.includes("--fc-envelope-color"), "The lazy detail chunk must include the actual component implementation");
 assert.ok(detailCode.includes("export interface EnvelopeRevealProps"), "The lazy detail chunk must include source text for the source-files panel");
-const detailStylesheets = await Promise.all((detailEntry[1].css ?? []).map((file) => readFile(join(dist, file), "utf8")));
-assert.ok(detailStylesheets.join("\n").includes(".fc-envelope__trigger"), "The component stylesheet must be emitted with the lazy detail entry");
 assert.ok(!html.includes("envelope-reveal"), "Component-specific assets must not be linked by the initial HTML");
 
-console.log(`Playground bundle boundaries verified: ${initialScripts.length} initial script(s), detail chunk ${detailEntry[1].file}; component code and raw source are lazy-loaded.`);
+console.log(`Playground bundle boundaries verified: ${initialScripts.length} initial script(s), Tailwind styles in the shared stylesheet, detail code and raw source in ${detailEntry[1].file}.`);

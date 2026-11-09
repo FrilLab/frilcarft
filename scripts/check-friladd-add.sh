@@ -88,7 +88,20 @@ cat > "$CONSUMER/package.json" <<'JSON'
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "scripts": { "build": "tsc --noEmit && vite build" }
+  "scripts": { "build": "tsc --noEmit && vite build" },
+  "dependencies": {
+    "cn": "^0.5.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.6"
+  }
 }
 JSON
 cat > "$CONSUMER/tsconfig.json" <<'JSON'
@@ -102,6 +115,7 @@ cat > "$CONSUMER/tsconfig.json" <<'JSON'
     "esModuleInterop": true,
     "skipLibCheck": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
     "noEmit": true
   },
   "include": ["src"]
@@ -118,7 +132,7 @@ mkdir -p "$CONSUMER/src"
 cat > "$CONSUMER/src/main.tsx" <<'TSX'
 import { createRoot } from "react-dom/client";
 import { EnvelopeReveal } from "./components/envelope-reveal";
-import "./components/envelope-reveal/envelope-reveal.css";
+import "./consumer.css";
 
 const element = document.getElementById("root");
 if (!element) throw new Error("Missing root element");
@@ -126,21 +140,39 @@ createRoot(element).render(
   <EnvelopeReveal title="FrilAdd independent consumer verification" />,
 );
 TSX
+cat > "$CONSUMER/src/consumer.css" <<'CSS'
+@import "tailwindcss";
+
+@source "./components/envelope-reveal";
+CSS
+cat > "$CONSUMER/vite.config.ts" <<'TS'
+import { defineConfig } from "vite";
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
+
+export default defineConfig({ plugins: [tailwindcss(), react()] });
+TS
 
 echo "Install pinned React consumer tooling and build the independent project"
 (
   cd "$CONSUMER"
   npm install --no-audit --no-fund --save-exact \
-    react@19.2.0 react-dom@19.2.0 \
-    vite@8.3.0 typescript@5.9.3 \
-    @types/react@19.2.0 @types/react-dom@19.2.0
+    react@19.3.1 react-dom@19.3.1 cn@0.5.2 \
+    vite@8.3.6 typescript@7.0.2 \
+    tailwindcss@4.3.5 @tailwindcss/vite@4.3.5 \
+    @vitejs/plugin-react@6.3.0 \
+    @types/react@19.3.0 @types/react-dom@19.3.0
   npm run build
 )
 test -f "$CONSUMER/dist/index.html"
 test -n "$(find "$CONSUMER/dist/assets" -name '*.js' -print -quit)"
 test -n "$(find "$CONSUMER/dist/assets" -name '*.css' -print -quit)"
-if grep -RE '@frillab/interactive|from .three' "$CONSUMER/src/components"; then
+if grep -RE '@frillab/interactive|from .three|@react-three/(fiber|drei)' "$CONSUMER/src/components"; then
   echo "ERROR: installed component requires FrilCraft workspace or Three.js" >&2
+  exit 1
+fi
+if ! grep -R -q 'perspective:850px' "$CONSUMER/dist/assets"/*.css; then
+  echo "ERROR: Tailwind did not emit the copied Envelope Reveal styling" >&2
   exit 1
 fi
 

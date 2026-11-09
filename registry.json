@@ -4,22 +4,17 @@
   "items": [
     {
       "name": "envelope-reveal",
-      "description": "An accessible React envelope reveal interaction with CSS animation.",
+      "description": "An accessible React envelope reveal interaction styled with Tailwind CSS v4.",
       "files": [
         {
           "source": "packages/interactive/src/components/envelope-reveal/EnvelopeReveal.tsx",
           "target": "src/components/envelope-reveal/EnvelopeReveal.tsx",
-          "sha256": "04a359e25b9ed9ce3f6f78724bff22b2f6bfac82de9698ed6926424b1087e3db"
+          "sha256": "9c447a4efe8705fc969844364b0a1174997b0dd9c0748ca72f8b1ca35a62ddea"
         },
         {
           "source": "packages/interactive/src/components/envelope-reveal/index.ts",
           "target": "src/components/envelope-reveal/index.ts",
           "sha256": "04968ad358fa11959c461981c6b741b565709617a0d21d78ca799215bbe607c3"
-        },
-        {
-          "source": "packages/interactive/src/components/envelope-reveal/envelope-reveal.css",
-          "target": "src/components/envelope-reveal/envelope-reveal.css",
-          "sha256": "b37e6f1af5ba615ed755722ab0d1c28aa88ce01dbdcccd54ba061d14d5319c41"
         },
         {
           "source": "LICENSE",

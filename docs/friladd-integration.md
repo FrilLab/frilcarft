@@ -2,7 +2,7 @@
 
 FrilAdd is the recommended way to install FrilCraft components into another project. User-facing commands use npm's `latest` dist-tag. FrilAdd is an independent developer-side CLI: FrilCraft publishes a compatible Registry Manifest, and FrilAdd reads the selected item's declared source files. FrilAdd has no FrilCraft-specific behavior, does not run downloaded code, and does not install npm dependencies.
 
-The package `@frillab/interactive` remains private and unpublished. The installed components are ordinary React source files copied into your project. The canonical implementation files remain under `packages/interactive/src/components/`; `registry.json` points to those files and remains the authoritative list of installable component IDs and destinations.
+The package `@frillab/interactive` remains private and unpublished. The installed components are ordinary React source files copied into your project. The canonical implementation files remain under `packages/interactive/src/components/`; `registry.json` points to those files and remains the authoritative list of installable component IDs and destinations. Tailwind-based components require consumer-side Tailwind setup, and `cn` is a runtime dependency when the copied component imports it.
 
 ## Register FrilCraft once for your global setup
 
@@ -58,22 +58,49 @@ Use the explicit `--project <directory>` option if you are running FrilAdd from 
 
 ## Use the component
 
-The current item copies `EnvelopeReveal.tsx`, `index.ts`, `envelope-reveal.css`, and the MIT license notice into `src/components/envelope-reveal/`. In `src/App.tsx`, import the local source and its stylesheet:
+The current item copies `EnvelopeReveal.tsx`, `index.ts`, and the MIT license notice into `src/components/envelope-reveal/`. It contains no component stylesheet. Envelope Reveal requires React 19, `cn`, and Tailwind CSS v4. Install the component and build dependencies:
+
+The Playground's shadcn/ui and Radix dependencies are not part of the copied files and are not required by consumers.
+
+```bash
+npm install cn
+npm install -D tailwindcss @tailwindcss/vite
+```
+
+Configure Vite with the official plugin:
+
+```ts
+import { defineConfig } from "vite";
+import tailwindcss from "@tailwindcss/vite";
+
+export default defineConfig({ plugins: [tailwindcss()] });
+```
+
+If the consumer CSS file is `src/app.css`, import Tailwind and point its source scanner at the copied component:
+
+```css
+@import "tailwindcss";
+@source "./components/envelope-reveal";
+```
+
+Import the CSS entry and local component from your application:
 
 ```tsx
 import { EnvelopeReveal } from "./components/envelope-reveal";
-import "./components/envelope-reveal/envelope-reveal.css";
+import "./app.css";
 
 export function Example() {
   return <EnvelopeReveal title="You're invited" />;
 }
 ```
 
-React 18 or 19 is required. No additional component runtime dependency is needed. FrilAdd copies files only; install React in your project if needed.
+FrilAdd copies files only; it does not install React or `cn`, add Tailwind, configure Vite, or edit your CSS entry. Tailwind's generated CSS must scan the copied component source so it includes Envelope Reveal's static utilities.
 
 ## Existing files and updates
 
 FrilAdd refuses to overwrite an existing target file. Review the conflicting files, then install into a clean target or move the files you want to replace before retrying. FrilAdd does not automatically update, synchronize, or remove installed components.
+
+Previously installed Envelope Reveal copies are not automatically upgraded. The Tailwind source layout replaces the older component stylesheet, so manually replace the old component files and remove an obsolete stylesheet import when updating. FrilAdd does not perform that migration.
 
 The Registry Manifest's SHA-256 values let FrilAdd verify that fetched file bytes match the selected manifest. The digest is not a publisher signature. Review the Registry and component source you choose to install.
 

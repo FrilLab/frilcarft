@@ -10,7 +10,14 @@
   },
   "dependencies": {
     "@frillab/interactive": "0.0.0",
+    "@radix-ui/react-tabs": "^1.2.1",
+    "@radix-ui/react-tooltip": "^1.4.1",
+    "cn": "^0.5.2",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.5",
+    "tailwindcss": "^4.3.5"
   }
 }

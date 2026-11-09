@@ -1,9 +1,7 @@
 import { EnvelopeReveal } from "@frillab/interactive/envelope-reveal";
-import "@frillab/interactive/envelope-reveal.css";
 import type { EnvelopeRevealProps } from "@frillab/interactive/envelope-reveal";
 import componentSource from "../../../../../packages/interactive/src/components/envelope-reveal/EnvelopeReveal.tsx?raw";
 import componentIndexSource from "../../../../../packages/interactive/src/components/envelope-reveal/index.ts?raw";
-import componentStyles from "../../../../../packages/interactive/src/components/envelope-reveal/envelope-reveal.css?sourceText";
 import licenseText from "../../../../../LICENSE?raw";
 import { registerComponent } from "../codegen.js";
 
@@ -24,26 +22,23 @@ const envelopeRevealDefaults: EnvelopeRevealPlaygroundProps = {
 export const componentDetail = registerComponent<EnvelopeRevealPlaygroundProps>({
   componentName: "EnvelopeReveal",
   workspaceImportPath: "@frillab/interactive/envelope-reveal",
-  workspaceCssImportPath: "@frillab/interactive/envelope-reveal.css",
   sourceImportPath: "./components/envelope-reveal",
-  sourceCssImportPath: "./components/envelope-reveal/envelope-reveal.css",
   Preview: EnvelopeReveal,
   defaultProps: envelopeRevealDefaults,
   controls: [
-    { key: "title", label: "Title", kind: "text" },
-    { key: "message", label: "Message", kind: "textarea" },
-    { key: "eyebrow", label: "Eyebrow text", kind: "text" },
-    { key: "envelopeColor", label: "Envelope color", kind: "color" },
-    { key: "accentColor", label: "Accent color", kind: "color" },
-    { key: "paperColor", label: "Paper color", kind: "color" },
+    { key: "title", label: "Title", description: "The main line printed on the revealed letter.", kind: "text" },
+    { key: "message", label: "Message", description: "The letter copy shown beneath its title.", kind: "textarea" },
+    { key: "eyebrow", label: "Eyebrow text", description: "The small introductory line above the title.", kind: "text" },
+    { key: "envelopeColor", label: "Envelope color", description: "The base color used for the envelope and pocket.", kind: "color" },
+    { key: "accentColor", label: "Accent color", description: "The accent used on the flap and wax seal.", kind: "color" },
+    { key: "paperColor", label: "Paper color", description: "The background color of the letter.", kind: "color" },
   ],
   sourceFiles: [
     { path: "EnvelopeReveal.tsx", content: componentSource },
     { path: "index.ts", content: componentIndexSource },
-    { path: "envelope-reveal.css", content: componentStyles },
     { path: "LICENSE", content: licenseText },
   ],
-  sourceInstructions: "Copy all files into src/components/envelope-reveal/. This usage example assumes it is in src/App.tsx. React 18 or 19 is required; no other runtime dependency is needed.",
+  sourceInstructions: "Copy all files into src/components/envelope-reveal/. This example assumes it is in src/App.tsx. Install React 19, cn, and Tailwind CSS v4 with @tailwindcss/vite; FrilAdd copies files but does not install dependencies or configure Tailwind.",
   previewHint: "Click the envelope to open it",
-  previewFeatures: ["Keyboard accessible", "Reduced motion supported"],
+  previewFeatures: ["React 19", "Reduced motion supported"],
 });

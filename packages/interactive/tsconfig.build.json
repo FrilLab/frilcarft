@@ -8,8 +8,8 @@
     "declarationDir": "./dist/types"
   },
   "include": [
-    "src/components/envelope-reveal/**/*.ts",
-    "src/components/envelope-reveal/**/*.tsx"
+    "src/components/envelope-reveal/index.ts",
+    "src/components/envelope-reveal/EnvelopeReveal.tsx"
   ],
   "exclude": [
     "**/*.test.ts",
