@@ -11,7 +11,7 @@ function entry(overrides: Partial<ComponentCatalogEntry> & Pick<ComponentCatalog
     description: overrides.description ?? `${overrides.name} interaction for printed invitations`,
     category: overrides.category ?? "interaction",
     tags: overrides.tags ?? ["reveal", "invitation"],
-    badges: overrides.badges ?? ["React", "CSS"],
+    badges: overrides.badges ?? ["React", "Tailwind"],
     installable: overrides.installable ?? false,
     load: overrides.load ?? vi.fn(),
     ...(overrides.previewImage ? { previewImage: overrides.previewImage } : {}),
@@ -39,7 +39,7 @@ describe("catalog metadata and filtering", () => {
     expect(componentCatalog[0]).toMatchObject({
       category: "interaction",
       tags: ["reveal", "invitation", "animation", "click"],
-      badges: ["React", "CSS"],
+      badges: ["React", "Tailwind"],
     });
   });
 

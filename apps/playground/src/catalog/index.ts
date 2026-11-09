@@ -5,10 +5,10 @@ export const componentCatalog: readonly ComponentCatalogEntry[] = [
   {
     id: "envelope-reveal",
     name: "Envelope Reveal",
-    description: "A letter animation built with React and CSS.",
+    description: "An invitation letter that unfolds with a soft, paper-like motion.",
     category: "interaction",
     tags: ["reveal", "invitation", "animation", "click"],
-    badges: ["React", "CSS"],
+    badges: ["React", "Tailwind"],
     installable: true,
     previewImage: "/previews/envelope-reveal.svg",
     load: async () => (await import("./entries/envelope-reveal.js")).componentDetail,

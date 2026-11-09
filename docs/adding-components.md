@@ -1,78 +1,108 @@
 # Adding a component
 
-This guide describes the explicit React component workflow. Component implementations have one canonical home in `packages/interactive`; the Playground previews those components and exposes their actual source files. The gallery reads small metadata records and loads a component's detail entry only after its route is selected.
+This guide describes FrilCraft's React-first component workflow. Component implementations have one canonical home in `packages/interactive`; the Playground previews those files and exposes their real source for copying. Gallery metadata stays lightweight and detail modules load only when their route is selected.
 
-## 1. Implement the reusable component
+## 1. Implement the React component
 
-Create `packages/interactive/src/components/<id>/` with the React implementation, an optional stylesheet, and an `index.ts` barrel:
+Create `packages/interactive/src/components/<id>/` with a React 19 and TypeScript implementation, an `index.ts` barrel, focused tests, and a separate stylesheet only when the component's mechanics remain clearer in CSS:
 
 ```text
 packages/interactive/src/components/<id>/
   ComponentName.tsx
-  component-name.css
   index.ts
+  ComponentName.test.tsx
 ```
 
-Export the component and its props interface from the barrel. React owns markup and lifecycle; use CSS and native browser APIs for DOM interactions. DOM components must not depend on Three.js, Canvas, Stage, the Playground, analytics, or remote services.
+Use Tailwind CSS v4 utilities for DOM layout, spacing, typography, colors, and common states. Import `cn` directly from `cn` when conditional classes or consumer overrides need Tailwind-aware merging. Keep class names static so consumer Tailwind builds can discover them. Use CSS custom properties for caller values that cannot be statically known, such as colors. React owns markup and lifecycle; use native browser behavior for interaction. DOM components must not depend on Three.js, Canvas, Stage, the Playground, analytics, or remote services.
 
-## 2. Add the explicit package build entries
+The Playground may use its local shadcn/ui controls for search, filters, property editing, code tabs, and copy actions. `apps/playground/components.json` selects Radix-backed implementations, and the UI source lives under `apps/playground/src/components/ui/`. Do not import these controls, aliases, theme files, or dependencies into `packages/interactive`; FrilAdd copies reusable component source only. External consumers do not need shadcn/ui or Radix for Envelope Reveal.
 
-Update `packages/interactive/package.json` with the component source in the package `files` list plus its JavaScript and optional CSS subpath exports. Add the component's source entry to `packages/interactive/vite.config.ts`, its TypeScript files to `packages/interactive/tsconfig.build.json`, and any emitted static assets to `packages/interactive/scripts/copy-assets.mjs`. Keep React external and a peer dependency.
+## 2. Register package build entries and dependencies
 
-These files are deliberately explicit. For this prototype, adding a few clear entries is easier to maintain than a build generator. Add only the dependencies the component needs; Three.js must stay out of DOM-only entries.
+Update `packages/interactive/package.json` with explicit exports and source files. Add the entry to `packages/interactive/vite.config.ts` and its TypeScript declaration inputs to `packages/interactive/tsconfig.build.json`. Register only justified static assets in the copy script. Keep React external as a peer dependency and declare every component runtime import in the package's `dependencies`. Tailwind CSS and `@tailwindcss/vite` belong to consumer build tooling, not the component runtime. Do not install Three.js, React Three Fiber, or Drei for DOM components.
 
-## 3. Add a lazy Playground entry and lightweight metadata
+Keep these entries explicit; a few understandable package entries do not need a generator.
 
-Create `apps/playground/src/catalog/entries/<id>.tsx`. This component-specific file imports the real package component, its stylesheet, the real implementation files for copy, defaults, controls, source-copy instructions, and preview details. Import source text with Vite `?raw` for TypeScript and `?sourceText` for CSS; do not duplicate source strings.
+## 3. Add the lazy Playground entry and metadata
 
-Use the shared `registerComponent` helper from `catalog/codegen.ts` to create the detail registration. Configure both the private workspace import paths and copied-source import paths. Configure each editable value once in the default properties and controls; the shared generator serializes string, number, and boolean props, omits unchanged defaults and undefined values, and produces separate workspace and copied-source examples.
+Create `apps/playground/src/catalog/entries/<id>.tsx`. Keep implementation imports, defaults, controls, usage paths, source-copy instructions, and actual source-file imports in that component detail file. Import component source text with Vite `?raw` from its canonical file; do not duplicate implementation text.
 
-Then add one object to `apps/playground/src/catalog/index.ts` with only the stable ID, display name, description, one category ID, semantic tags, technology badges, installable flag, static preview image, and lazy loader:
+Use `registerComponent` from `catalog/codegen.ts`. CSS import paths are optional: add them only when the component has a real separate stylesheet. The shared generator omits the CSS import from generated examples when no path is configured.
 
-```ts
+Add one object to `apps/playground/src/catalog/index.ts` with only stable gallery metadata and a dynamic loader:
+
+```tsx
 {
   id: "sample-card",
   name: "Sample Card",
   description: "A reusable React card.",
   category: "interaction",
   tags: ["click", "reveal"],
-  badges: ["React", "CSS"],
+  badges: ["React", "Tailwind"],
   installable: false,
   previewImage: "/previews/sample-card.svg",
   load: async () => (await import("./entries/sample-card.js")).componentDetail,
 }
 ```
 
-`category` is one stable machine ID from `catalog/metadata.ts`; it describes the component's primary collection. The Gallery displays its centrally defined label and offers only categories that have registered components, plus **All**. `tags` is a nonempty list of curated semantic IDs from the same metadata module; tags are searchable and clickable, and multiple selected tags use AND matching. Add a new tag to the central vocabulary when needed, then use that ID consistently. `badges` lists noninteractive technology details such as React or CSS; badges are not search filters.
+`category` is one stable primary classification from `catalog/metadata.ts`; `tags` are multiple curated semantic identifiers and use AND filtering; `badges` are display-only technology labels. Add only taxonomy values that a registered component uses. Search, categories, and tags operate on metadata and never call detail loaders. Gallery previews use static artwork instead of mounting every component.
 
-Do not import the component, CSS, or raw source files from this catalog. Its metadata adds a gallery card, category option, tag filters, and `/components/<id>` route without changing `App.tsx`, `ComponentGallery.tsx`, or `ComponentDetail.tsx`. The Gallery uses the static preview image and does not mount components. Search and filters read metadata only and preserve their state in URL query parameters.
+## 4. Document copied-source consumption
 
-## 4. Add source-copy files and installation instructions
+List the actual component files in the detail entry and include the root `LICENSE` so redistributed copies retain the MIT notice. Source examples must import local copied files, not the private workspace package. Clearly document React as a peer dependency, every runtime package such as `cn`, Tailwind CSS v4, the Vite plugin, Tailwind source scanning, required CSS imports, and any external runtime library.
 
-List each actual file required by the copied-source example in the detail entry. Include the root `LICENSE` so copies retain the MIT notice. `sourceInstructions` should identify the destination, where the example is assumed to live, and any runtime dependency. The UI displays and copies each file separately.
+For a Tailwind component, downstream setup should show the official Vite plugin and application CSS entry:
 
-Workspace examples import the private, unpublished `@frillab/interactive` package. Copied-source examples import local files and their stylesheet; this is the supported external example while the package remains unpublished. Do not show an npm install command for this private package.
+```bash
+npm install cn
+npm install -D tailwindcss @tailwindcss/vite
+```
 
-## 5. Register installable files in the FrilAdd manifest
+```ts
+import { defineConfig } from "vite";
+import tailwindcss from "@tailwindcss/vite";
 
-If the component can be installed, add its source files and targets to root `registry.json` using Registry Manifest v1. Keep sources canonical under `packages/interactive/src/components/`; do not add a duplicate implementation. Use safe, unique paths. The Registry item ID must match the Playground metadata ID, and its targets must match the files and imports described by the detail entry.
+export default defineConfig({ plugins: [tailwindcss()] });
+```
 
-After editing source files or the manifest, run:
+```css
+@import "tailwindcss";
+@source "./components/sample-card";
+```
+
+FrilAdd copies declared source files only. It does not install these dependencies, set up Vite, or configure Tailwind.
+
+## 5. Register the FrilAdd source files
+
+For installable components, add canonical files and consumer targets to root `registry.json` using the existing FrilAdd Registry Manifest v1 schema. Keep sources under `packages/interactive/src/components/`, use safe unique paths, and keep the item ID aligned with the Playground metadata. Do not add Playground-only metadata to the Registry.
+
+After editing Registry-listed source files or file lists, run:
 
 ```bash
 npm run registry:sync
 npm run test:registry
 ```
 
-`registry:sync` preserves the existing item structure and updates only stale SHA-256 values from source bytes. It rejects unsafe paths and missing files, does not add or remove items, and prints changed hashes. It makes no file changes when hashes are already current. `test:registry` is read-only and checks hashes, missing/unsafe paths, duplicate IDs and targets, and installable catalog ID consistency. CI runs verification only and fails on stale hashes.
+`registry:sync` updates only SHA-256 values after validating paths and files. `test:registry` is read-only and checks hashes, paths, IDs, targets, and installable catalog consistency. CI runs verification only.
 
-## 6. Validate the package and Playground
+## 6. Validate independent consumption
 
-Add focused tests for component behavior, accessibility, properties, and lifecycle. Verify the installed package and copied-source consumer with `npm run build`. The Playground build also checks its Vite production manifest: the initial Gallery's static module graph must not include component implementations, component-specific CSS, raw source text, or Three.js; the component detail must appear in its own dynamic chunk. Gallery filtering must not call detail loaders.
+Add focused tests for defaults, behavior, accessibility, overrides, lifecycle, and reduced motion. The source consumer must copy the actual files into an isolated project, configure Tailwind, import its CSS entry and local component, typecheck the source, build with Vite, and verify emitted component utilities. The package consumer must build the generated package output with Tailwind scanning the imported package code. Keep both consumers independent of the private package as appropriate; the copied-source path must not import it. Check that React is not duplicated and DOM bundles contain no Three.js, R3F, or Drei.
 
-The current consumer fixtures are explicit Envelope Reveal examples. When adding a component, include its built-package import and CSS checks in `tests/consumers/react-vite/` and its real copied files in `tests/consumers/source-vite/build.mjs`; keep those consumers isolated from the private workspace package where appropriate. Update the FrilAdd integration workflow paths if it must run for the new source files.
+The Playground production bundle check must confirm that Gallery JavaScript does not include the implementation or raw source, and that the detail entry remains a separate dynamic chunk. Tailwind utility CSS may live in the shared application stylesheet because it is generated from statically scanned source files.
 
-Run the repository validation:
+## Standard workflow
+
+1. Implement the React component.
+2. Use Tailwind CSS and `cn` where useful; keep separate CSS only when justified.
+3. Register package exports and declaration/build inputs.
+4. Register the Playground detail entry and catalog metadata.
+5. Add semantic tags from the centralized vocabulary.
+6. Update the FrilAdd Registry Manifest v1 file list when the component is installable.
+7. Synchronize and verify SHA-256 values.
+8. Test source and package consumption independently.
+
+Run the repository checks from the root:
 
 ```bash
 npm ci
@@ -83,4 +113,4 @@ npm run test:registry
 npm run build
 ```
 
-The independent FrilAdd integration workflow uses published `friladd@0.1.2`. Playground commands shown to users continue to use `friladd@latest`.
+The FrilAdd integration workflow stays pinned to the verified `0.1.2`; user-facing install commands use `friladd@latest`.

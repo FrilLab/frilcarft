@@ -4,13 +4,16 @@
 
 ## Scope
 
-FrilCraft's initial public component interface is React + TypeScript. DOM components use React, CSS, and browser APIs directly. These rendering foundations preserve a clear path for future GPU-backed components without making DOM components depend on a renderer.
+FrilCraft's initial public component interface is React 19 + TypeScript. Tailwind CSS v4 styles DOM components, and browser APIs handle their interactions. These rendering foundations preserve a clear path for future GPU-backed components without making DOM components depend on a renderer.
+
+The Playground uses local shadcn/ui source backed by Radix for its own controls. Those modules are an application concern and are excluded from the reusable package and source distribution contract.
 
 ## Component and dependency boundaries
 
-- React is a peer dependency of the reusable component package. The Playground and build tools remain development tooling.
-- Prefer native browser APIs and CSS for interaction and animation. Motion, GSAP, and React Three Fiber are not default dependencies.
+- React is a peer dependency of the reusable component package. `cn` is a runtime dependency when a component imports it. The Playground and build tools remain development tooling.
+- Prefer Tailwind utilities and native browser APIs for DOM interaction and animation. Motion and GSAP are not dependencies. React Three Fiber is the preferred React integration only for a future component that genuinely needs 3D.
 - Three.js may be used only by components or backend entrypoints that need 3D.
+- Tailwind styles HTML overlays; it does not style Three.js mesh materials.
 - DOM-only components must not import Three.js, allocate Canvas elements, or require a Stage or View.
 - Keep package subpath exports explicit so a DOM consumer does not load unrelated GPU code.
 - Components and copied source must not depend on the Playground, Registry, FrilStudio, analytics, or remote services.
@@ -58,8 +61,8 @@ FrilCraft's initial public component interface is React + TypeScript. DOM compon
 
 ## Distribution
 
-- The current package exports the React Envelope Reveal component and its stylesheet through explicit subpaths.
-- React remains a peer dependency. Three.js is not a dependency or peer dependency until a component uses it.
+- The current package exports the React Envelope Reveal component through an explicit subpath. It has no separate component stylesheet; consumers compile its static Tailwind utilities from component source.
+- React remains a peer dependency and `cn` a component runtime dependency. Three.js, R3F, and Drei are not installed until a component uses them.
 - Test independent consumer builds; source imports or subpath exports alone do not prove bundle boundaries.
 - Preserve the MIT license notice in copied component source.
 
@@ -68,6 +71,6 @@ FrilCraft's initial public component interface is React + TypeScript. DOM compon
 - Stage/View runtime implementation and the first functioning Three.js backend.
 - Direct WebGL2/WebGPU backend decisions based on a real component and performance evidence.
 - GPU resource sharing, context loss, visibility, and pointer-routing policies.
-- Registry distribution and npm publishing.
+- Public npm publishing and a 3D runtime implementation.
 
 The Stage and View interfaces currently in `packages/interactive/src/core/` are type-only design contracts, not implemented APIs. Do not describe them as working runtime features.

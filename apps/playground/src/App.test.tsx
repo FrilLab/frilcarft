@@ -68,7 +68,7 @@ describe("Playground", () => {
     expect(screen.getByRole("heading", { name: "Try the preview" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Interaction" })).toHaveAttribute("href", "/?category=interaction");
     expect(screen.getByRole("button", { name: "Open the letter" })).toBeInTheDocument();
-    expect(document.querySelector(".fc-envelope__message")).toHaveTextContent("A little something, just for you.");
+    expect(document.querySelector('[data-component="envelope-reveal"]')).toHaveTextContent("A little something, just for you.");
     expect(screen.getByText("Click the envelope to open it")).toBeInTheDocument();
   });
 
@@ -149,7 +149,7 @@ describe("Playground", () => {
     expect(screen.getByText("npx --yes friladd@latest registry add frilcraft https://raw.githubusercontent.com/FrilLab/frilcraft/main/registry.json --global --default")).toBeInTheDocument();
     expect(screen.getByText("npx --yes friladd@latest add envelope-reveal")).toBeInTheDocument();
     expect(screen.getByText(/Run once for a global setup/)).toBeInTheDocument();
-    expect(screen.getByText(/can replace your current default Registry selection/)).toBeInTheDocument();
+    expect(screen.getByText(/can replace your current default/)).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Source Files" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Workspace Usage" })).toBeInTheDocument();
 
@@ -186,12 +186,27 @@ describe("Playground", () => {
     expect(screen.getByText("Save the date")).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Envelope color"), { target: { value: "#123456" } });
-    expect(document.querySelector(".fc-envelope")).toHaveStyle({ "--fc-envelope-color": "#123456" });
+    expect(document.querySelector('[data-component="envelope-reveal"]')).toHaveStyle({ "--fc-envelope-color": "#123456" });
     expect(screen.getByRole("tabpanel")).toHaveTextContent('envelopeColor={"#123456"}');
 
     await user.click(screen.getByRole("button", { name: /Reset/ }));
     expect(screen.getByText("You're invited")).toBeInTheDocument();
-    expect(document.querySelector(".fc-envelope")).toHaveStyle({ "--fc-envelope-color": "#d9bda7" });
+    expect(document.querySelector('[data-component="envelope-reveal"]')).toHaveStyle({ "--fc-envelope-color": "#d9bda7" });
+  });
+
+  it("uses keyboard-accessible Radix tabs and focused property tooltips", async () => {
+    const user = userEvent.setup();
+    await renderDetail();
+
+    const titleHint = screen.getByRole("button", { name: "About Title" });
+    titleHint.focus();
+    expect(await screen.findByRole("tooltip")).toHaveTextContent("The main line printed on the revealed letter.");
+
+    const copiedSourceTab = screen.getByRole("tab", { name: "Copied Source Usage" });
+    await user.click(copiedSourceTab);
+    await user.keyboard("{ArrowRight}");
+    expect(screen.getByRole("tab", { name: "Workspace Usage" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tabpanel")).toHaveTextContent("@frillab/interactive is private and unpublished");
   });
 
   it("generates valid copied-source TSX for current text and workspace TSX for the private package", async () => {
@@ -200,7 +215,7 @@ describe("Playground", () => {
 
     const initialCode = screen.getByRole("tabpanel").textContent ?? "";
     expect(initialCode).toContain('import { EnvelopeReveal } from "./components/envelope-reveal";');
-    expect(initialCode).toContain('import "./components/envelope-reveal/envelope-reveal.css";');
+    expect(initialCode).not.toContain(".css");
     expect(initialCode).toContain("<EnvelopeReveal />");
 
     const titleValue = 'Sam said "hello" \\ again — こんにちは';
@@ -220,7 +235,7 @@ describe("Playground", () => {
     await user.click(screen.getByRole("tab", { name: "Workspace Usage" }));
     const workspaceCode = screen.getByRole("tabpanel").textContent ?? "";
     expect(workspaceCode).toContain('from "@frillab/interactive/envelope-reveal"');
-    expect(workspaceCode).toContain('import "@frillab/interactive/envelope-reveal.css";');
+    expect(workspaceCode).not.toContain(".css");
     expect(workspaceCode).toContain(`title={${JSON.stringify(titleValue)}}`);
     expect(workspaceCode).toContain("private and unpublished");
   });
@@ -236,16 +251,15 @@ describe("Playground", () => {
 
     await user.click(screen.getByRole("tab", { name: "Source Files" }));
     expect(screen.getByText(/Copy all files into src\/components\/envelope-reveal/)).toBeInTheDocument();
+    expect(screen.getByText(/Install React 19, cn, and Tailwind CSS v4/)).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Source file EnvelopeReveal.tsx" })).toHaveTextContent("export function EnvelopeReveal");
     expect(screen.getByRole("region", { name: "Source file index.ts" })).toHaveTextContent("./EnvelopeReveal.js");
-    expect(screen.getByRole("region", { name: "Source file envelope-reveal.css" })).toHaveTextContent(".fc-envelope__trigger");
     expect(screen.getByRole("region", { name: "Source file LICENSE" })).toHaveTextContent("Copyright (c) 2026 FrilLab");
     expect(screen.queryByText(/@frillab\/interactive/)).not.toBeInTheDocument();
 
     const files = [
       ["EnvelopeReveal.tsx", "export function EnvelopeReveal"],
       ["index.ts", "./EnvelopeReveal.js"],
-      ["envelope-reveal.css", ".fc-envelope__trigger"],
       ["LICENSE", "Copyright (c) 2026 FrilLab"],
     ];
     for (const [filename, content] of files) {
