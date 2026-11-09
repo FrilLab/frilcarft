@@ -1,19 +1,33 @@
 import { useEffect, useState } from "react";
 import type { AnchorHTMLAttributes, MouseEvent } from "react";
 
-/** Small client-side navigation for the two Playground page types. */
-export function usePathname(): string {
-  const [pathname, setPathname] = useState(() =>
-    typeof window === "undefined" ? "/" : window.location.pathname,
+export interface BrowserLocation {
+  readonly pathname: string;
+  readonly search: string;
+}
+
+/** Small client-side navigation shared by routes and Gallery query state. */
+export function useLocation(): BrowserLocation {
+  const [location, setLocation] = useState<BrowserLocation>(() =>
+    typeof window === "undefined"
+      ? { pathname: "/", search: "" }
+      : { pathname: window.location.pathname, search: window.location.search },
   );
 
   useEffect(() => {
-    const handleLocationChange = () => setPathname(window.location.pathname);
+    const handleLocationChange = () => setLocation({
+      pathname: window.location.pathname,
+      search: window.location.search,
+    });
     window.addEventListener("popstate", handleLocationChange);
-    return () => window.removeEventListener("popstate", handleLocationChange);
+    window.addEventListener("frilcraft:navigate", handleLocationChange);
+    return () => {
+      window.removeEventListener("popstate", handleLocationChange);
+      window.removeEventListener("frilcraft:navigate", handleLocationChange);
+    };
   }, []);
 
-  return pathname;
+  return location;
 }
 
 interface SiteLinkProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
@@ -39,7 +53,7 @@ export function SiteLink({ href, onClick, ...props }: SiteLinkProps) {
     if (next === current) return;
 
     window.history.pushState(null, "", next);
-    window.dispatchEvent(new PopStateEvent("popstate"));
+    window.dispatchEvent(new Event("frilcraft:navigate"));
     document.documentElement.scrollTop = 0;
   };
 

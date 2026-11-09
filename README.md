@@ -15,7 +15,7 @@ scripts/                          Registry sync and verification
 docs/                             Architecture and contributor documentation
 ```
 
-The Playground gallery imports only static catalog metadata. Component entries, component CSS, and copyable raw source files load when a user opens a detail route. The detail preview imports the actual reusable component from `packages/interactive`.
+The Playground Gallery imports only static catalog metadata. It provides name, ID, description, category, and tag search; category and multi-tag filters can be shared through URL query parameters. Component entries, component CSS, and copyable raw source files load only when a user opens a detail route. The detail preview imports the actual reusable component from `packages/interactive`.
 
 ## How the project connects
 
@@ -37,18 +37,20 @@ Playground App
                 +-- Actual source files and FrilAdd commands
 ```
 
-Component implementations live in `packages/interactive/src/components/`. Gallery metadata lives in `apps/playground/src/catalog/index.ts`; each component's implementation imports and detail configuration live under `apps/playground/src/catalog/entries/`. Shared usage-code serialization lives in `apps/playground/src/catalog/codegen.ts`.
+Component implementations live in `packages/interactive/src/components/`. Gallery metadata lives in `apps/playground/src/catalog/index.ts`; each component's implementation imports and detail configuration live under `apps/playground/src/catalog/entries/`. Category IDs, category labels, and the curated semantic tag vocabulary live in `apps/playground/src/catalog/metadata.ts`. Shared filtering and URL query parsing live in `apps/playground/src/catalog/filter.ts`; shared usage-code serialization lives in `apps/playground/src/catalog/codegen.ts`.
+
+Gallery metadata separates three concepts: a **Category** is one primary classification used for navigation, a **Tag** is a curated semantic filter that can be combined with other tags, and **Badges** are noninteractive technology labels such as React and CSS. New metadata and lazy detail registrations appear in the Gallery and its filters automatically; shared page components do not need component-specific edits. See [Adding components](docs/adding-components.md) for how to choose an existing category and tag or extend the curated tag list.
 
 The Playground has two entry points:
 
-- `/` lists **all registered components** as cards.
+- `/` lists **all registered components** as static preview cards and supports shareable search and filters.
 - `/components/envelope-reveal` opens Envelope Reveal's interactive detail view directly.
 
 Adding metadata and a lazy detail entry adds the card and URL. The gallery uses static preview artwork rather than running every component. See [Project Map](docs/architecture/project-map.md) and [Adding components](docs/adding-components.md).
 
 ## Requirements and development
 
-- Node.js 22.12 or newer
+- Node.js `^22.22.2`, `^24.15.0`, or `>=26.0.0` (required by JSDOM 31)
 - npm 10 or newer
 
 ```bash
@@ -69,6 +71,8 @@ npm run preview
 - `build:playground` checks the production bundle manifest to confirm component code and raw source stay outside the initial Gallery bundle.
 - `registry:sync` updates only changed Registry SHA-256 values from canonical source bytes. Run `npm run test:registry` separately to verify; verification never writes files.
 - `preview` serves the production Playground at <http://localhost:4173>; run `npm run build` first.
+
+TypeScript 7 provides the `tsc` CLI. The `typescript-api` npm alias keeps the TypeScript 6 compiler API available to the Registry catalog parser and generated-usage tests until TypeScript 7 ships its stable API.
 
 ## Install Envelope Reveal outside this workspace
 

@@ -1,4 +1,4 @@
-import ts from "typescript";
+import ts from "typescript-api";
 import { describe, expect, it } from "vitest";
 import { createUsageCode } from "./codegen.js";
 import type { UsageCodeDefinition } from "./types.js";

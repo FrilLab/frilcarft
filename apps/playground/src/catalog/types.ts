@@ -1,4 +1,5 @@
 import type { ComponentType, ReactNode } from "react";
+import type { ComponentCategory, ComponentTag } from "./metadata.js";
 
 export type PlaygroundValue = string | number | boolean | undefined;
 export type PlaygroundProps = Record<string, PlaygroundValue>;
@@ -54,7 +55,8 @@ export interface ComponentCatalogEntry {
   readonly id: string;
   readonly name: string;
   readonly description: string;
-  readonly category: string;
+  readonly category: ComponentCategory;
+  readonly tags: readonly ComponentTag[];
   readonly badges: readonly string[];
   readonly installable: boolean;
   readonly previewImage?: string;

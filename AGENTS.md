@@ -19,6 +19,7 @@ FrilCraft is an early prototype. The React-first Envelope Reveal Playground is t
 - Three.js is reserved for components that need 3D. DOM components must not import Three.js, create a Canvas, or require a Stage.
 - Keep the Registry optional. Components must not depend on the Playground, FrilStudio, analytics, or remote services.
 - Keep the component catalog explicit and small. Do not add discovery systems, general schema frameworks, or runtime code execution.
+- Playground catalog entries require one stable category ID, curated semantic tags, and noninteractive technology badges. Keep category labels and the curated tag vocabulary centralized in `apps/playground/src/catalog/metadata.ts`; derive visible category and tag filters from registered metadata.
 
 ## Rendering architecture
 
@@ -46,6 +47,7 @@ See [rendering foundations](docs/architecture/rendering-foundations.md) before c
 
 - Keep package exports, build entries, declarations, copied CSS assets, Playground registration, and source-consumer validation explicit for each component. The current package has one component; do not add a generator for a few explicit build entries.
 - Keep `apps/playground/src/catalog/index.ts` limited to gallery metadata and lazy detail loaders. Put each implementation import, stylesheet import, defaults, controls, usage paths, and actual source-file imports in `catalog/entries/<id>.tsx`. Keep shared JSX serialization in `catalog/codegen.ts` and shared rendering in `ComponentDetail.tsx`.
+- Gallery categories, semantic tags, and technology badges are distinct metadata. Category is a single machine-readable primary classification; tags are multiple curated, searchable semantic identifiers with AND filtering; badges are display-only technologies. Generate options from registered catalog entries, keep search and filtering within metadata, and never call a detail loader from the Gallery.
 - Use `import()` for component detail entries. Do not import component implementations, CSS, or raw component source from the lightweight catalog or the Playground app shell.
 - The gallery must list every catalog registration and each card must link to `/components/<id>`. Keep all component-specific page data in the catalog; do not hardcode component names in shared page components.
 - Use static gallery artwork where available, not a live mount of every component; GPU components must not initialize merely because the gallery is open.

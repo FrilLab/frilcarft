@@ -1,14 +1,15 @@
 import { componentCatalog } from "./catalog/index.js";
 import { ComponentDetail } from "./ComponentDetail.js";
 import { ComponentGallery } from "./ComponentGallery.js";
-import { SiteLink, usePathname } from "./navigation.js";
+import { SiteLink, useLocation } from "./navigation.js";
 
 /**
  * App owns the site shell and URL routing.
  * Gallery and component detail both read from the same catalog.
  */
 function App() {
-  const segments = usePathname().split("/").filter(Boolean);
+  const location = useLocation();
+  const segments = location.pathname.split("/").filter(Boolean);
   const onGallery = segments.length === 0;
   const selectedComponent = segments.length === 2 && segments[0] === "components"
     ? componentCatalog.find((component) => component.id === segments[1])
@@ -16,70 +17,21 @@ function App() {
 
   return (
     <div className="playground-shell">
-      <aside className="sidebar">
-        <SiteLink className="brand" href="/" aria-label="FrilCraft Playground home">
-          <span className="brand-mark" aria-hidden="true">f</span>
-          <span>frilcraft<span className="brand-dot">.</span></span>
-        </SiteLink>
-        <div className="sidebar-label">WORKSPACE</div>
-        <div className="workspace-name">
-          <span className="workspace-avatar" aria-hidden="true">F</span>
-          <span>Component studio</span>
-          <span className="workspace-chevron" aria-hidden="true">⌄</span>
-        </div>
-        <nav className="component-navigation" aria-label="Components">
-          <div className="sidebar-label navigation-label">
-            COMPONENTS <span>{componentCatalog.length}</span>
-          </div>
-          <SiteLink
-            href="/"
-            className={`component-nav-item${onGallery ? " is-active" : ""}`}
-            aria-current={onGallery ? "page" : undefined}
-          >
-            <span className="nav-item-icon" aria-hidden="true">▦</span>
-            <span>All components</span>
-            <span className="nav-item-indicator" aria-hidden="true" />
+      <header className="site-header">
+        <div className="site-header-inner">
+          <SiteLink className="brand" href="/" aria-label="FrilCraft home">
+            FrilCraft<span aria-hidden="true">.</span>
           </SiteLink>
-          {componentCatalog.map((component) => (
-            <SiteLink
-              className={`component-nav-item${selectedComponent?.id === component.id ? " is-active" : ""}`}
-              key={component.id}
-              href={`/components/${component.id}`}
-              aria-current={selectedComponent?.id === component.id ? "page" : undefined}
-            >
-              <span className="nav-item-icon" aria-hidden="true">✳</span>
-              <span>{component.name}</span>
-              <span className="nav-item-indicator" aria-hidden="true" />
-            </SiteLink>
-          ))}
-        </nav>
-        <div className="sidebar-footer">
-          <span className="status-dot" aria-hidden="true" />
-          Prototype workspace
+          <nav className="site-navigation" aria-label="Main navigation">
+            <SiteLink href="/" aria-current={onGallery ? "page" : undefined}>Components</SiteLink>
+            <a href="https://github.com/FrilLab/frilcraft" target="_blank" rel="noreferrer">GitHub<span className="external-arrow" aria-hidden="true">↗</span></a>
+          </nav>
         </div>
-      </aside>
+      </header>
 
       <main className="main-content" id="top">
-        <header className="topbar">
-          <div className="breadcrumbs">
-            {onGallery ? (
-              <strong>Components</strong>
-            ) : (
-              <>
-                <SiteLink href="/">Components</SiteLink>
-                <span aria-hidden="true">/</span>
-                <strong>{selectedComponent?.name ?? "Not found"}</strong>
-              </>
-            )}
-          </div>
-          <div className="topbar-meta">
-            <span className="live-indicator" />
-            FrilCraft Playground
-            <span className="version-pill">v0.0.0</span>
-          </div>
-        </header>
         {onGallery ? (
-          <ComponentGallery />
+          <ComponentGallery search={location.search} />
         ) : selectedComponent ? (
           <ComponentDetail key={selectedComponent.id} selectedComponent={selectedComponent} />
         ) : (
