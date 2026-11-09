@@ -95,6 +95,10 @@ The component requires React 18 or 19 and has no other runtime dependency. Keep 
 
 See [Envelope Reveal](docs/components/envelope-reveal.md) for the API and [Adding components](docs/adding-components.md) for the implemented contribution workflow.
 
+## FrilAdd source installation
+
+FrilCraft publishes a [FrilAdd Registry v1 manifest](registry.json) for independently installing Envelope Reveal's source, stylesheet, barrel file, and MIT notice. [Integration instructions](docs/friladd-integration.md) include the local Rust CLI workflow and SHA-256 validation. FrilAdd's npm distribution is not assumed available yet.
+
 ## Architecture
 
 React is the primary component interface. CSS and browser APIs handle DOM-only interactions. Stage/View rendering contracts remain documented for future GPU components; no Three.js runtime is implemented. See [Rendering Foundations](docs/architecture/rendering-foundations.md).
