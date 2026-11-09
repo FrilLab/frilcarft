@@ -1,13 +1,21 @@
 import { useMemo, useState } from "react";
 import type { ComponentRegistration, PlaygroundProps, PlaygroundValue } from "./catalog.js";
+import {
+  createFrilAddComponentCommand,
+  createFrilAddQualifiedComponentCommand,
+  createFrilAddRegistrationCommand,
+} from "./lib/friladd.js";
 
 type CodeView = "copied-source-usage" | "workspace-usage" | "source-files";
+type InstallCopyKey = "registration" | "install" | "qualified";
+const registrationCommand = createFrilAddRegistrationCommand();
 
 /** Editor for one registered component; it does not own site navigation. */
 export function ComponentDetail({ selectedComponent }: { selectedComponent: ComponentRegistration }) {
   const [values, setValues] = useState<PlaygroundProps>(selectedComponent.defaultProps);
   const [codeView, setCodeView] = useState<CodeView>("copied-source-usage");
   const [copyStatus, setCopyStatus] = useState("");
+  const [installCopyStatus, setInstallCopyStatus] = useState<Partial<Record<InstallCopyKey, string>>>({});
 
   const usageCode = useMemo(
     () => selectedComponent.generateUsageCode(values, codeView === "workspace-usage" ? "workspace" : "source"),
@@ -40,6 +48,18 @@ export function ComponentDetail({ selectedComponent }: { selectedComponent: Comp
       setCopyStatus(`${path} copied.`);
     } catch {
       setCopyStatus(`Copy failed for ${path}. Select the file contents and copy them manually.`);
+    }
+  };
+
+  const copyInstallCommand = async (key: InstallCopyKey, command: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(command);
+      setInstallCopyStatus((current) => ({ ...current, [key]: `${label} copied.` }));
+    } catch {
+      setInstallCopyStatus((current) => ({
+        ...current,
+        [key]: `Copy failed for ${label.toLowerCase()}. Select the command and copy it manually.`,
+      }));
     }
   };
 
@@ -164,6 +184,73 @@ export function ComponentDetail({ selectedComponent }: { selectedComponent: Comp
             </button>
           )}
         </div>
+        <section className="friladd-install" aria-labelledby="friladd-install-title">
+          <div className="friladd-install-heading">
+            <span className="card-kicker">RECOMMENDED INSTALLER · FRILADD LATEST</span>
+            <h3 id="friladd-install-title">Install with FrilAdd</h3>
+            <p>Register FrilCraft once, then install this component with a short command. FrilAdd copies the selected component files into your project.</p>
+          </div>
+          {selectedComponent.installable ? (
+            <>
+              <div className="friladd-step">
+                <div className="friladd-step-title">
+                  <span>STEP 1</span>
+                  <h4>Register FrilCraft</h4>
+                </div>
+                <div className="friladd-command-row">
+                  <pre><code>{registrationCommand}</code></pre>
+                  <button
+                    className="copy-button"
+                    type="button"
+                    aria-label="Copy FrilAdd registration command"
+                    onClick={() => copyInstallCommand("registration", registrationCommand, "Registration command")}
+                  >
+                    <span aria-hidden="true">▢</span> Copy
+                  </button>
+                </div>
+                <p className="friladd-help">Run once for a global setup. <code>--global</code> makes the Registry available across projects; <code>--default</code> sets FrilCraft as your default and can replace your current default Registry selection. Omit <code>--default</code> to keep that selection.</p>
+                <span className="friladd-copy-status" aria-live="polite">{installCopyStatus.registration ?? ""}</span>
+              </div>
+
+              <div className="friladd-step friladd-step--primary">
+                <div className="friladd-step-title">
+                  <span>STEP 2</span>
+                  <h4>Install {selectedComponent.name}</h4>
+                </div>
+                <div className="friladd-command-row">
+                  <pre><code>{createFrilAddComponentCommand(selectedComponent.id)}</code></pre>
+                  <button
+                    className="copy-button"
+                    type="button"
+                    aria-label={`Copy ${selectedComponent.name} install command`}
+                    onClick={() => copyInstallCommand("install", createFrilAddComponentCommand(selectedComponent.id), "Install command")}
+                  >
+                    <span aria-hidden="true">▢</span> Copy
+                  </button>
+                </div>
+                <span className="friladd-copy-status" aria-live="polite">{installCopyStatus.install ?? ""}</span>
+                <details className="friladd-alternative">
+                  <summary>Alternative: use the explicit Registry alias</summary>
+                  <p>Use this after registering the FrilCraft alias when you do not want it to be your default Registry.</p>
+                  <div className="friladd-command-row">
+                    <pre><code>{createFrilAddQualifiedComponentCommand(selectedComponent.id)}</code></pre>
+                    <button
+                      className="copy-button"
+                      type="button"
+                      aria-label={`Copy ${selectedComponent.name} qualified install command`}
+                      onClick={() => copyInstallCommand("qualified", createFrilAddQualifiedComponentCommand(selectedComponent.id), "Qualified install command")}
+                    >
+                      <span aria-hidden="true">▢</span> Copy
+                    </button>
+                  </div>
+                  <span className="friladd-copy-status" aria-live="polite">{installCopyStatus.qualified ?? ""}</span>
+                </details>
+              </div>
+            </>
+          ) : (
+            <p className="friladd-unavailable">This preview is not registered in the FrilCraft Registry, so it cannot be installed with FrilAdd yet.</p>
+          )}
+        </section>
         <div className="code-toolbar">
           <div className="code-tabs" role="tablist" aria-label="Code type">
             <button

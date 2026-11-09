@@ -101,6 +101,26 @@ h1, h2, p { margin-top: 0; }
 .code-card { margin-top: 15px; }
 .code-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 67px; padding: 12px 17px; }
 .code-card-heading h2 { font-size: 13px; }
+.friladd-install { display: grid; gap: 14px; padding: 16px 17px; border-block: 1px solid #eee9e5; background: #fbfaf9; }
+.friladd-install-heading h3 { margin: 4px 0 5px; color: #403740; font-size: 15px; font-weight: 650; }
+.friladd-install-heading p { max-width: 70ch; margin: 0; color: #82797c; font-size: 10px; line-height: 1.6; }
+.friladd-step { min-width: 0; padding: 12px; border: 1px solid #e9e2de; border-radius: 8px; background: #fff; }
+.friladd-step--primary { border-color: #ddcfd0; box-shadow: 0 2px 8px rgb(85 64 69 / 4%); }
+.friladd-step-title { display: flex; align-items: baseline; gap: 9px; margin-bottom: 8px; }
+.friladd-step-title > span { color: #a17e83; font: 500 9px "DM Mono", monospace; letter-spacing: .07em; }
+.friladd-step-title h4 { margin: 0; color: #554b52; font-size: 11px; font-weight: 650; }
+.friladd-command-row { display: flex; align-items: stretch; gap: 8px; min-width: 0; }
+.friladd-command-row pre { min-width: 0; flex: 1; margin: 0; overflow: auto; padding: 9px 10px; border-radius: 6px; background: #28272c; color: #eee9e3; }
+.friladd-command-row code { font: 9px/1.55 "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre; }
+.friladd-command-row .copy-button { flex: 0 0 auto; align-self: center; }
+.friladd-help, .friladd-alternative p, .friladd-unavailable { margin: 8px 0 0; color: #8b8284; font-size: 9px; line-height: 1.6; }
+.friladd-help code { color: #6d5862; font: 9px "DM Mono", monospace; }
+.friladd-copy-status { display: block; min-height: 0; color: #7e7779; font-size: 9px; }
+.friladd-alternative { margin-top: 11px; padding-top: 10px; border-top: 1px solid #f0ece8; }
+.friladd-alternative summary { width: fit-content; color: #705d65; font-size: 9px; font-weight: 600; cursor: pointer; }
+.friladd-alternative > p { margin: 7px 0; }
+.friladd-alternative .friladd-command-row code { font-size: 8px; }
+.friladd-unavailable { margin: 0; }
 .copy-button { display: inline-flex; align-items: center; gap: 7px; min-height: 32px; padding: 0 11px; border: 1px solid #ded4d0; border-radius: 6px; background: #fff; color: #5d5158; font-size: 10px; font-weight: 600; cursor: pointer; transition: background .15s, border-color .15s; }
 .copy-button:hover { border-color: #c7aeb1; background: #fcf8f7; }
 .copy-button span { font-size: 13px; }
@@ -165,6 +185,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   .property-control--textarea { grid-column: auto; }
   .code-card-heading { align-items: flex-start; flex-direction: column; padding-block: 14px; }
   .copy-button { align-self: stretch; justify-content: center; }
+  .friladd-command-row { align-items: stretch; flex-direction: column; }
+  .friladd-command-row .copy-button { align-self: stretch; }
+  .friladd-command-row pre { max-width: 100%; }
+  .friladd-step { padding: 10px; }
   .code-tabs { gap: 12px; }
   .code-tabs button { font-size: 9px; }
   .code-footer { align-items: flex-start; flex-direction: column; }

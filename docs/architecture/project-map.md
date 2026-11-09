@@ -31,4 +31,4 @@ The catalog provides static preview artwork for gallery cards. Mounting every li
 
 ## Not yet implemented
 
-The shadcn-compatible Registry, npm publishing, Three.js Stage/View runtime, and independent FrilAdd Rust CLI remain future work. They are not required for the current gallery/editor workflow.
+The FrilAdd Registry Manifest and independent FrilAdd CLI provide the source-install workflow. The shadcn-compatible Registry, npm publishing, and Three.js Stage/View runtime remain future work. The Playground displays installer commands; it does not resolve Registries or execute the CLI.
