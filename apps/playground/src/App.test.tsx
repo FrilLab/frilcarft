@@ -3,7 +3,12 @@ import userEvent from "@testing-library/user-event";
 import ts from "typescript";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App.js";
-import { componentCatalog } from "./catalog.js";
+import { componentCatalog } from "./catalog/index.js";
+
+async function renderDetail() {
+  render(<App />);
+  await screen.findByRole("button", { name: "Open the letter" });
+}
 
 describe("Playground", () => {
   beforeEach(() => {
@@ -21,16 +26,28 @@ describe("Playground", () => {
 
     await user.click(screen.getByRole("link", { name: "Explore Envelope Reveal" }));
     expect(window.location.pathname).toBe("/components/envelope-reveal");
-    expect(screen.getByRole("button", { name: "Open the letter" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Open the letter" })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("link", { name: "All components" }));
+    await act(async () => {
+      await new Promise<void>((resolve) => {
+        window.addEventListener("popstate", () => resolve(), { once: true });
+        window.history.back();
+      });
+    });
     expect(window.location.pathname).toBe("/");
     expect(screen.getByRole("heading", { name: "Explore components." })).toBeInTheDocument();
+    await act(async () => {
+      await new Promise<void>((resolve) => {
+        window.addEventListener("popstate", () => resolve(), { once: true });
+        window.history.forward();
+      });
+    });
+    expect(await screen.findByRole("button", { name: "Open the letter" })).toBeInTheDocument();
   });
 
-  it("loads direct component paths and shows a useful not-found state for unknown URLs", () => {
+  it("loads direct component paths and shows a useful not-found state for unknown URLs", async () => {
     const view = render(<App />);
-    expect(screen.getByRole("button", { name: "Open the letter" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Open the letter" })).toBeInTheDocument();
 
     act(() => {
       window.history.replaceState(null, "", "/components/unknown-component");
@@ -42,8 +59,8 @@ describe("Playground", () => {
     view.unmount();
   });
 
-  it("lists Envelope Reveal and renders the package component in its preview", () => {
-    render(<App />);
+  it("lists Envelope Reveal and renders the package component in its preview", async () => {
+    await renderDetail();
 
     expect(componentCatalog.map(({ id }) => id)).toEqual(["envelope-reveal"]);
     expect(screen.getByRole("navigation", { name: "Components" })).toHaveTextContent("Envelope Reveal");
@@ -54,7 +71,7 @@ describe("Playground", () => {
 
   it("shows component-aware FrilAdd install instructions and the alias alternative", async () => {
     const user = userEvent.setup();
-    render(<App />);
+    await renderDetail();
 
     expect(screen.getByRole("heading", { name: "Install with FrilAdd" })).toBeInTheDocument();
     expect(screen.getByText("npx --yes friladd@latest registry add frilcraft https://raw.githubusercontent.com/FrilLab/frilcraft/main/registry.json --global --default")).toBeInTheDocument();
@@ -75,7 +92,7 @@ describe("Playground", () => {
       configurable: true,
       value: { writeText },
     });
-    render(<App />);
+    await renderDetail();
 
     await user.click(screen.getByRole("button", { name: "Copy FrilAdd registration command" }));
     await waitFor(() => expect(screen.getByText("Registration command copied.")).toBeInTheDocument());
@@ -89,7 +106,7 @@ describe("Playground", () => {
 
   it("updates the preview immediately and reset restores component defaults", async () => {
     const user = userEvent.setup();
-    render(<App />);
+    await renderDetail();
 
     const title = screen.getByLabelText("Title");
     await user.clear(title);
@@ -107,7 +124,7 @@ describe("Playground", () => {
 
   it("generates valid copied-source TSX for current text and workspace TSX for the private package", async () => {
     const user = userEvent.setup();
-    render(<App />);
+    await renderDetail();
 
     const initialCode = screen.getByRole("tabpanel").textContent ?? "";
     expect(initialCode).toContain('import { EnvelopeReveal } from "./components/envelope-reveal";');
@@ -143,7 +160,7 @@ describe("Playground", () => {
       configurable: true,
       value: { writeText },
     });
-    render(<App />);
+    await renderDetail();
 
     await user.click(screen.getByRole("tab", { name: "Source Files" }));
     expect(screen.getByText(/Copy all files into src\/components\/envelope-reveal/)).toBeInTheDocument();
@@ -172,7 +189,7 @@ describe("Playground", () => {
       configurable: true,
       value: { writeText: vi.fn().mockRejectedValue(new Error("clipboard unavailable")) },
     });
-    render(<App />);
+    await renderDetail();
 
     await user.click(screen.getByRole("button", { name: "Copy local source usage" }));
 
@@ -187,7 +204,7 @@ describe("Playground", () => {
       configurable: true,
       value: { writeText: vi.fn().mockRejectedValue(new Error("clipboard unavailable")) },
     });
-    render(<App />);
+    await renderDetail();
 
     await user.click(screen.getByRole("button", { name: "Copy Envelope Reveal install command" }));
     expect(await screen.findByText("Copy failed for install command. Select the command and copy it manually.")).toBeInTheDocument();

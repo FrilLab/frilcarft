@@ -1,7 +1,7 @@
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
-import { createUsageCode } from "./catalog.js";
-import type { UsageCodeDefinition } from "./catalog.js";
+import { createUsageCode } from "./codegen.js";
+import type { UsageCodeDefinition } from "./types.js";
 
 interface SyntheticProps {
   caption?: string;
@@ -21,17 +21,17 @@ const syntheticDefinition: UsageCodeDefinition<SyntheticProps> = {
     optionalNote: undefined,
   },
   controls: [
-    { key: "caption", label: "Caption", kind: "textarea" as const },
-    { key: "count", label: "Count", kind: "number" as const },
-    { key: "enabled", label: "Enabled", kind: "boolean" as const },
-    { key: "optionalNote", label: "Optional note", kind: "text" as const },
+    { key: "caption", label: "Caption", kind: "textarea" },
+    { key: "count", label: "Count", kind: "number" },
+    { key: "enabled", label: "Enabled", kind: "boolean" },
+    { key: "optionalNote", label: "Optional note", kind: "text" },
   ],
 };
 
 describe("createUsageCode", () => {
-  it("uses the registered component and paths while serializing string, number, and boolean props", () => {
+  it("serializes string, number, and boolean props and produces valid TSX", () => {
     const caption = 'A "quoted" path \\ across lines\n한글 🌈';
-    const code = createUsageCode<SyntheticProps>(syntheticDefinition, {
+    const code = createUsageCode(syntheticDefinition, {
       caption,
       count: 4.5,
       enabled: true,
@@ -51,7 +51,7 @@ describe("createUsageCode", () => {
   });
 
   it("omits default and undefined optional properties", () => {
-    const code = createUsageCode<SyntheticProps>(syntheticDefinition, {
+    const code = createUsageCode(syntheticDefinition, {
       caption: "Default caption",
       count: 0,
       enabled: false,

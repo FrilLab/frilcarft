@@ -1,4 +1,4 @@
-import { componentCatalog } from "./catalog.js";
+import { componentCatalog } from "./catalog/index.js";
 import { SiteLink } from "./navigation.js";
 
 /** The home page lists only components that are actually registered. */

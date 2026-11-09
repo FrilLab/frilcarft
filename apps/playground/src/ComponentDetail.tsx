@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import type { ComponentRegistration, PlaygroundProps, PlaygroundValue } from "./catalog.js";
+import { useEffect, useMemo, useState } from "react";
+import type { ComponentCatalogEntry, ComponentDetailRegistration, PlaygroundProps, PlaygroundValue } from "./catalog/index.js";
 import {
   createFrilAddComponentCommand,
   createFrilAddQualifiedComponentCommand,
@@ -10,16 +10,63 @@ type CodeView = "copied-source-usage" | "workspace-usage" | "source-files";
 type InstallCopyKey = "registration" | "install" | "qualified";
 const registrationCommand = createFrilAddRegistrationCommand();
 
+/** Load a detail registration only after its route is selected. */
+export function ComponentDetail({ selectedComponent }: { selectedComponent: ComponentCatalogEntry }) {
+  const [attempt, setAttempt] = useState(0);
+  const [loadState, setLoadState] = useState<
+    | { id: string; status: "loading" }
+    | { id: string; status: "loaded"; detail: ComponentDetailRegistration }
+    | { id: string; status: "error" }
+  >({ id: selectedComponent.id, status: "loading" });
+
+  useEffect(() => {
+    let active = true;
+    setLoadState({ id: selectedComponent.id, status: "loading" });
+    selectedComponent.load().then(
+      (detail) => {
+        if (active) setLoadState({ id: selectedComponent.id, status: "loaded", detail });
+      },
+      () => {
+        if (active) setLoadState({ id: selectedComponent.id, status: "error" });
+      },
+    );
+    return () => { active = false; };
+  }, [selectedComponent, attempt]);
+
+  if (loadState.id !== selectedComponent.id || loadState.status === "loading") {
+    return <div className="page-content detail-loading" role="status" aria-live="polite">Loading {selectedComponent.name}…</div>;
+  }
+
+  if (loadState.status === "error") {
+    return (
+      <div className="page-content not-found-page detail-load-error" role="alert">
+        <div className="eyebrow-label">DETAIL UNAVAILABLE</div>
+        <h1>Could not load {selectedComponent.name}.</h1>
+        <p>The component detail module failed to load. Check your connection and try again.</p>
+        <button type="button" className="return-to-gallery" onClick={() => setAttempt((value) => value + 1)}>Try again</button>
+      </div>
+    );
+  }
+
+  return <ComponentDetailEditor key={selectedComponent.id} selectedComponent={selectedComponent} detail={loadState.detail} />;
+}
+
 /** Editor for one registered component; it does not own site navigation. */
-export function ComponentDetail({ selectedComponent }: { selectedComponent: ComponentRegistration }) {
-  const [values, setValues] = useState<PlaygroundProps>(selectedComponent.defaultProps);
+function ComponentDetailEditor({
+  selectedComponent,
+  detail,
+}: {
+  selectedComponent: ComponentCatalogEntry;
+  detail: ComponentDetailRegistration;
+}) {
+  const [values, setValues] = useState<PlaygroundProps>(detail.defaultProps);
   const [codeView, setCodeView] = useState<CodeView>("copied-source-usage");
   const [copyStatus, setCopyStatus] = useState("");
   const [installCopyStatus, setInstallCopyStatus] = useState<Partial<Record<InstallCopyKey, string>>>({});
 
   const usageCode = useMemo(
-    () => selectedComponent.generateUsageCode(values, codeView === "workspace-usage" ? "workspace" : "source"),
-    [selectedComponent, values, codeView],
+    () => detail.generateUsageCode(values, codeView === "workspace-usage" ? "workspace" : "source"),
+    [detail, values, codeView],
   );
   const isUsageView = codeView !== "source-files";
 
@@ -29,7 +76,7 @@ export function ComponentDetail({ selectedComponent }: { selectedComponent: Comp
   };
 
   const resetProperties = () => {
-    setValues(selectedComponent.defaultProps);
+    setValues(detail.defaultProps);
     setCopyStatus("");
   };
 
@@ -92,14 +139,14 @@ export function ComponentDetail({ selectedComponent }: { selectedComponent: Comp
           </div>
           <div className="preview-canvas">
             <div className="canvas-glow" aria-hidden="true" />
-            <div className="preview-component">{selectedComponent.render(values)}</div>
-            {selectedComponent.previewHint && (
-              <div className="canvas-caption"><span className="caption-line" /> {selectedComponent.previewHint} <span className="caption-line" /></div>
+            <div className="preview-component">{detail.render(values)}</div>
+            {detail.previewHint && (
+              <div className="canvas-caption"><span className="caption-line" /> {detail.previewHint} <span className="caption-line" /></div>
             )}
           </div>
-          {selectedComponent.previewFeatures.length > 0 && (
+          {detail.previewFeatures.length > 0 && (
             <div className="preview-footer">
-              {selectedComponent.previewFeatures.map((feature) => <span key={feature}>{feature}</span>)}
+              {detail.previewFeatures.map((feature) => <span key={feature}>{feature}</span>)}
             </div>
           )}
         </div>
@@ -116,7 +163,7 @@ export function ComponentDetail({ selectedComponent }: { selectedComponent: Comp
           </div>
 
           <div className="controls-list">
-            {selectedComponent.controls.map((control) => {
+            {detail.controls.map((control) => {
               const value = values[String(control.key)];
               const stringValue = typeof value === "string" ? value : value === undefined ? "" : String(value);
               return (
@@ -287,15 +334,15 @@ export function ComponentDetail({ selectedComponent }: { selectedComponent: Comp
               Source Files
             </button>
           </div>
-          <span className="code-language">{isUsageView ? "TSX" : `${selectedComponent.sourceFiles.length} FILES`}</span>
+          <span className="code-language">{isUsageView ? "TSX" : `${detail.sourceFiles.length} FILES`}</span>
         </div>
         <div className={`code-panel${isUsageView ? "" : " code-panel--files"}`} id="code-panel" role="tabpanel" aria-labelledby={`${codeView}-tab`}>
           {isUsageView ? (
             <pre><code>{usageCode}</code></pre>
           ) : (
             <div className="source-files-list">
-              <p className="source-instructions">{selectedComponent.sourceInstructions}</p>
-              {selectedComponent.sourceFiles.map((file) => (
+              <p className="source-instructions">{detail.sourceInstructions}</p>
+              {detail.sourceFiles.map((file) => (
                 <section className="source-file" key={file.path} aria-label={`Source file ${file.path}`}>
                   <div className="source-file-heading">
                     <strong>{file.path}</strong>

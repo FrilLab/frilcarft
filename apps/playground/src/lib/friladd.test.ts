@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { componentCatalog } from "../catalog.js";
+import { componentCatalog } from "../catalog/index.js";
 import {
   FRILADD_REGISTRY_ALIAS,
   FRILADD_VERSION,

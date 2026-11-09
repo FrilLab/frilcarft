@@ -1,87 +1,83 @@
 # Adding a component
 
-This guide describes the current React component workflow. Keep each component's implementation and public files in `packages/interactive`, then make one explicit Playground catalog registration. The Playground home page lists all registrations and each card links to its component detail page. The detail preview imports the library component; its usage snippets and source files are separately configured in that registration.
+This guide describes the explicit React component workflow. Component implementations have one canonical home in `packages/interactive`; the Playground previews those components and exposes their actual source files. The gallery reads small metadata records and loads a component's detail entry only after its route is selected.
 
-## 1. Create the component source
+## 1. Implement the reusable component
 
-Add a directory under `packages/interactive/src/components/<component-name>/` containing its React implementation, stylesheet when needed, and `index.ts` barrel:
+Create `packages/interactive/src/components/<id>/` with the React implementation, an optional stylesheet, and an `index.ts` barrel:
 
 ```text
-packages/interactive/src/components/<component-name>/
+packages/interactive/src/components/<id>/
   ComponentName.tsx
   component-name.css
   index.ts
 ```
 
-Export the props interface and component from the barrel. Use React + TypeScript for the public component API. React owns markup and lifecycle; use CSS and native browser behavior for DOM interactions. Keep DOM components independent of Canvas, Stage, the Playground, analytics, and remote services.
+Export the component and its props interface from the barrel. React owns markup and lifecycle; use CSS and native browser APIs for DOM interactions. DOM components must not depend on Three.js, Canvas, Stage, the Playground, analytics, or remote services.
 
-## 2. Expose the package entrypoint
+## 2. Add the explicit package build entries
 
-Add explicit JavaScript and CSS subpaths to `packages/interactive/package.json`. Point the `development` condition to the component source and the normal import/default conditions to built output. Point the `types` condition to the declaration emitted in `dist/types/`.
+Update `packages/interactive/package.json` with the component source in the package `files` list plus its JavaScript and optional CSS subpath exports. Add the component's source entry to `packages/interactive/vite.config.ts`, its TypeScript files to `packages/interactive/tsconfig.build.json`, and any emitted static assets to `packages/interactive/scripts/copy-assets.mjs`. Keep React external and a peer dependency.
 
-Add the component JavaScript entry to `packages/interactive/vite.config.ts`, its TypeScript files to `packages/interactive/tsconfig.build.json`, and any emitted static files to `packages/interactive/scripts/copy-assets.mjs`. These lists are explicit by design. React is a peer dependency and must stay external in the library build.
+These files are deliberately explicit. For this prototype, adding a few clear entries is easier to maintain than a build generator. Add only the dependencies the component needs; Three.js must stay out of DOM-only entries.
 
-The Playground resolves the development condition for live source updates. Production applications resolve the built package entry. Import the CSS subpath separately so consumers can choose where to load the stylesheet.
+## 3. Add a lazy Playground entry and lightweight metadata
 
-## 3. Register the preview and controls
+Create `apps/playground/src/catalog/entries/<id>.tsx`. This component-specific file imports the real package component, its stylesheet, the real implementation files for copy, defaults, controls, source-copy instructions, and preview details. Import source text with Vite `?raw` for TypeScript and `?sourceText` for CSS; do not duplicate source strings.
 
-Add one typed registration in `apps/playground/src/catalog.tsx`. Configure the stable ID, display name, description, category, component name, package imports, copied-source imports, actual component preview, default property values, controls, and whether it is installable with FrilAdd. Control kinds currently include text, textarea, color, number, and boolean.
+Use the shared `registerComponent` helper from `catalog/codegen.ts` to create the detail registration. Configure both the private workspace import paths and copied-source import paths. Configure each editable value once in the default properties and controls; the shared generator serializes string, number, and boolean props, omits unchanged defaults and undefined values, and produces separate workspace and copied-source examples.
 
-Set `installable: true` only when the component has a matching item in the root FrilAdd Registry Manifest. Leave preview-only registrations non-installable. The registry verification checks the installable catalog IDs against the manifest IDs.
+Then add one object to `apps/playground/src/catalog/index.ts` with only the stable ID, display name, description, category, badges, installable flag, static preview image, and lazy loader:
 
-For example, the registration explicitly provides `componentName: "ComponentName"`, its `workspaceImportPath`, its `workspaceCssImportPath`, and a `Preview` imported from the package. Put component-specific preview badges, optional hint text, and feature notes in that same registration. The shared shell reads this metadata and does not name individual components.
+```ts
+{
+  id: "sample-card",
+  name: "Sample Card",
+  description: "A reusable React card.",
+  category: "Interactive",
+  badges: ["React", "CSS"],
+  installable: false,
+  previewImage: "/previews/sample-card.svg",
+  load: async () => (await import("./entries/sample-card.js")).componentDetail,
+}
+```
 
-Use a control for each value that should be editable and included in generated examples. The generic generator omits properties equal to registered defaults and undefined optional values, and serializes strings, finite numbers, and booleans as JSX expressions. It does not evaluate generated code.
+Do not import the component, CSS, or raw source files from this catalog. Its metadata adds a gallery card and resolves `/components/<id>` without changing `App.tsx`, `ComponentGallery.tsx`, or `ComponentDetail.tsx`. The Gallery uses the static preview image and does not mount components.
 
-## 4. Configure usage-code generation
+## 4. Add source-copy files and installation instructions
 
-Set `componentName`, `workspaceImportPath`, and `workspaceCssImportPath` for private workspace examples. Set `sourceImportPath` and `sourceCssImportPath` to the local paths that match the copied-file instructions. The registration uses the shared `createUsageCode` formatter for both targets.
+List each actual file required by the copied-source example in the detail entry. Include the root `LICENSE` so copies retain the MIT notice. `sourceInstructions` should identify the destination, where the example is assumed to live, and any runtime dependency. The UI displays and copies each file separately.
 
-The Playground labels these outputs separately:
+Workspace examples import the private, unpublished `@frillab/interactive` package. Copied-source examples import local files and their stylesheet; this is the supported external example while the package remains unpublished. Do not show an npm install command for this private package.
 
-- **Workspace Usage** imports `@frillab/interactive` and is only usable inside this private repository workspace.
-- **Copied Source Usage** imports files from the consumer's project and is the example to use outside this repository while the package remains unpublished.
+## 5. Register installable files in the FrilAdd manifest
 
-Do not add an npm installation command for this private package.
+If the component can be installed, add its source files and targets to root `registry.json` using Registry Manifest v1. Keep sources canonical under `packages/interactive/src/components/`; do not add a duplicate implementation. Use safe, unique paths. The Registry item ID must match the Playground metadata ID, and its targets must match the files and imports described by the detail entry.
 
-## 5. Expose the actual source files
+After editing source files or the manifest, run:
 
-Add each file needed to use the component to the registration's `sourceFiles` list. Import TypeScript and barrel files with Vite's `?raw` query. Import CSS with `?sourceText`, handled by `apps/playground/source-file-plugin.ts`, which reads the current source file in development and production builds. Import the root `LICENSE` for the MIT notice. Do not hand-copy implementation strings into the Playground.
+```bash
+npm run registry:sync
+npm run test:registry
+```
 
-Optionally set `previewImage` to a static image placed in `apps/playground/public/previews/`. The gallery uses a name-based fallback when no image is provided and deliberately does not mount every component. Registered items automatically appear at `/` and `/components/<id>` without adding routes manually.
+`registry:sync` preserves the existing item structure and updates only stale SHA-256 values from source bytes. It rejects unsafe paths and missing files, does not add or remove items, and prints changed hashes. It makes no file changes when hashes are already current. `test:registry` is read-only and checks hashes, missing/unsafe paths, duplicate IDs and targets, and installable catalog ID consistency. CI runs verification only and fails on stale hashes.
 
-Set `sourceInstructions` to explain the target directory, assumptions in the usage snippet, and runtime dependencies. Show and copy each source file separately. Include the stylesheet, barrels, helper files, assets, and license needed by that component; do not expose Playground-only dependencies or imports.
+## 6. Validate the package and Playground
 
-For the current component, copy `EnvelopeReveal.tsx`, `index.ts`, `envelope-reveal.css`, and `LICENSE` into `src/components/envelope-reveal/`. The generated example imports from `./components/envelope-reveal` and imports its stylesheet separately.
+Add focused tests for component behavior, accessibility, properties, and lifecycle. Verify the installed package and copied-source consumer with `npm run build`. The Playground build also checks its Vite production manifest: the initial Gallery's static module graph must not include component implementations, component-specific CSS, raw source text, or Three.js; the component detail must appear in its own dynamic chunk.
 
-## 6. Add focused validation
+The current consumer fixtures are explicit Envelope Reveal examples. When adding a component, include its built-package import and CSS checks in `tests/consumers/react-vite/` and its real copied files in `tests/consumers/source-vite/build.mjs`; keep those consumers isolated from the private workspace package where appropriate. Update the FrilAdd integration workflow paths if it must run for the new source files.
 
-Add tests for the component's behavior, accessibility, prop updates, and lifecycle. Add Playground tests for actual preview rendering, live control updates, reset, source-file copy actions, and generated TSX. Use a small synthetic registration to verify that the generic generator honors component names, both import paths, default omission, string escaping, numeric props, and boolean props.
-
-Verify both consumer paths:
-
-- `tests/consumers/react-vite/` builds the built workspace package and its CSS export.
-- `tests/consumers/source-vite/build.mjs` copies the actual component files into a temporary isolated React app and builds local source imports without the workspace package.
-
-Confirm DOM component output does not import Three.js. Do not add Stage/View runtime behavior for DOM components.
-
-## 7. Register the installable source files
-
-For a component advertised as installable, add one item to the root `registry.json` using the existing FrilAdd Registry Manifest v1 format. Point each source to its canonical file under `packages/interactive/src/components/` and set the target paths to match `sourceImportPath`, `sourceCssImportPath`, and the source-copy instructions. Compute SHA-256 values from the source bytes; do not duplicate implementation files for the Registry. `npm run test:registry` checks paths, hashes, duplicate targets, and catalog/manifest ID consistency.
-
-The Playground displays FrilAdd commands using npm's `latest` dist-tag. CI independently pins and verifies FrilAdd v0.1.1. FrilAdd remains an independent generic installer; do not add its CLI implementation, registry resolution, package, or browser runtime to FrilCraft.
-
-## 8. Run the repository checks
-
-From a clean checkout, run:
+Run the repository validation:
 
 ```bash
 npm ci
 npm run typecheck
 npm run test
+npm run registry:sync
+npm run test:registry
 npm run build
-npm run dev
-npm run preview
 ```
 
-Run the dev and preview servers long enough to confirm they serve the Playground; preview requires a production build first. Update the README and component documentation alongside public API or workflow changes. Keep the component catalog explicit and do not add discovery systems, an in-app Registry resolver, or another component solely to exercise the workflow.
+The independent FrilAdd integration workflow uses published `friladd@0.1.2`. Playground commands shown to users continue to use `friladd@latest`.

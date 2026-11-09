@@ -219,7 +219,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .gallery-empty { padding: 25px; border: 1px dashed #d9cac9; border-radius: 9px; color: #81797d; }
 .breadcrumbs a { color: inherit; text-decoration: none; }
 .breadcrumbs a:hover { color: #5f4d57; text-decoration: underline; }
-.return-to-gallery { display: inline-block; margin-top: 16px; padding: 10px 16px; border-radius: 7px; background: #604c59; color: #fff; text-decoration: none; font-size: 12px; }
+.return-to-gallery { display: inline-block; margin-top: 16px; border: 0; padding: 10px 16px; border-radius: 7px; background: #604c59; color: #fff; text-decoration: none; font: inherit; font-size: 12px; cursor: pointer; }
+.detail-loading { min-height: 240px; display: grid; place-items: center; color: #80777b; font-size: 13px; }
 @media (max-width: 1150px) { .gallery-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 640px) { .gallery-grid { grid-template-columns: 1fr; } .gallery-card-artwork { height: 220px; } .gallery-intro { padding-top: 0; } }
 @media (prefers-reduced-motion: reduce) { .gallery-card { transition: none; } }
