@@ -16,7 +16,8 @@
     "build:source-consumer": "node tests/consumers/source-vite/build.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "preview": "npm run preview --workspace @frillab/playground"
+    "preview": "npm run preview --workspace @frillab/playground",
+    "test:registry": "node scripts/verify-friladd-registry.mjs"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",
