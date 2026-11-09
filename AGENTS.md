@@ -44,11 +44,14 @@ See [rendering foundations](docs/architecture/rendering-foundations.md) before c
 
 ## Current component distribution workflow
 
-- Keep package exports, build entries, declarations, copied CSS assets, Playground registration, and source-consumer validation explicit for each component.
-- Playground registrations provide the component name, workspace and local-source import paths, defaults, controls, preview metadata, and the real files needed for source copy.
+- Keep package exports, build entries, declarations, copied CSS assets, Playground registration, and source-consumer validation explicit for each component. The current package has one component; do not add a generator for a few explicit build entries.
+- Keep `apps/playground/src/catalog/index.ts` limited to gallery metadata and lazy detail loaders. Put each implementation import, stylesheet import, defaults, controls, usage paths, and actual source-file imports in `catalog/entries/<id>.tsx`. Keep shared JSX serialization in `catalog/codegen.ts` and shared rendering in `ComponentDetail.tsx`.
+- Use `import()` for component detail entries. Do not import component implementations, CSS, or raw component source from the lightweight catalog or the Playground app shell.
 - The gallery must list every catalog registration and each card must link to `/components/<id>`. Keep all component-specific page data in the catalog; do not hardcode component names in shared page components.
 - Use static gallery artwork where available, not a live mount of every component; GPU components must not initialize merely because the gallery is open.
 - Keep source files sourced from the component directory with Vite raw-file imports; do not duplicate implementation text in the Playground.
 - Label workspace package usage as private and unpublished. External usage examples must import copied local source files and their stylesheet.
 - Preserve the root MIT license in source copies. Validate both the built package consumer and the isolated source consumer with `npm run build`.
+- After editing Registry source files, run `npm run registry:sync` and then `npm run test:registry`. The verifier is read-only; CI must detect stale hashes without repairing them.
+- Keep the FrilAdd integration test pinned to the verified `0.1.2`; user-facing commands remain on `friladd@latest`.
 - FrilAdd is an independent project. Do not add CLI implementation, remote fetching, package installation, or Registry resolution to FrilCraft. FrilCraft may publish a compatible Registry Manifest and display commands that invoke a versioned FrilAdd CLI; this does not add a browser runtime dependency.

@@ -1,4 +1,4 @@
-import { componentCatalog } from "./catalog.js";
+import { componentCatalog } from "./catalog/index.js";
 import { ComponentDetail } from "./ComponentDetail.js";
 import { ComponentGallery } from "./ComponentGallery.js";
 import { SiteLink, usePathname } from "./navigation.js";

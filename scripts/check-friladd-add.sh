@@ -16,11 +16,11 @@ CONSUMER="$TEMP/consumer"
 mkdir -p "$CONSUMER"
 
 friladd() {
-  npx --yes friladd@0.1.1 "$@"
+  npx --yes friladd@0.1.2 "$@"
 }
 
 echo "Verify the pinned published CLI and register the FrilCraft Registry globally in isolated config"
-test "$(friladd --version)" = "friladd 0.1.1"
+test "$(friladd --version)" = "friladd 0.1.2"
 friladd registry add frilcraft "$FRILCRAFT_REGISTRY_URL" --global --default
 
 echo "Validate dry-run through the configured default Registry without project writes"
@@ -144,4 +144,4 @@ if grep -RE '@frillab/interactive|from .three' "$CONSUMER/src/components"; then
   exit 1
 fi
 
-echo "FrilAdd 0.1.1 installation and independent React consumer build passed."
+echo "FrilAdd 0.1.2 installation and independent React consumer build passed."

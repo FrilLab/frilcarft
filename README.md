@@ -11,33 +11,40 @@ apps/playground/                  React + TypeScript Playground
 packages/interactive/             Reusable React components and package build
 tests/consumers/react-vite/       Built-package React consumer validation
 tests/consumers/source-vite/      Isolated copied-source consumer validation
+scripts/                          Registry sync and verification
 docs/                             Architecture and contributor documentation
 ```
 
-The Playground preview imports the actual component from `packages/interactive`. Vite uses the package's development export for HMR and its built export in production. The component stylesheet is imported separately.
+The Playground gallery imports only static catalog metadata. Component entries, component CSS, and copyable raw source files load when a user opens a detail route. The detail preview imports the actual reusable component from `packages/interactive`.
 
 ## How the project connects
 
 The package is the source of truth for components; the Playground is a separate application that imports them. The catalog is a list of registered components, not another implementation.
 
 ```text
-packages/interactive/src/components/envelope-reveal/
-    └── EnvelopeReveal.tsx + CSS        reusable implementation
-                    ↓
-apps/playground/src/catalog.tsx          registration and display metadata
-                    ↓
-apps/playground/src/ComponentGallery.tsx /       component gallery
-apps/playground/src/ComponentDetail.tsx          live editor and source copying
-                    ↓
-tests/consumers/                       verify real external usage
+Browser
+  |
+  v
+Playground App
+  |
+  +-- Gallery -------------------- Lightweight catalog metadata
+  |
+  +-- Component Detail
+        |
+        +-- Lazy-loaded component entry
+                +-- Reusable package component
+                +-- Property controls and usage-code generator
+                +-- Actual source files and FrilAdd commands
 ```
+
+Component implementations live in `packages/interactive/src/components/`. Gallery metadata lives in `apps/playground/src/catalog/index.ts`; each component's implementation imports and detail configuration live under `apps/playground/src/catalog/entries/`. Shared usage-code serialization lives in `apps/playground/src/catalog/codegen.ts`.
 
 The Playground has two entry points:
 
 - `/` lists **all registered components** as cards.
 - `/components/envelope-reveal` opens Envelope Reveal's interactive detail view directly.
 
-Registering another component in the catalog automatically adds its card and detail URL. The gallery uses static preview artwork rather than running every component (important for future GPU components). See [Project Map](docs/architecture/project-map.md) and [Adding components](docs/adding-components.md).
+Adding metadata and a lazy detail entry adds the card and URL. The gallery uses static preview artwork rather than running every component. See [Project Map](docs/architecture/project-map.md) and [Adding components](docs/adding-components.md).
 
 ## Requirements and development
 
@@ -46,10 +53,12 @@ Registering another component in the catalog automatically adds its card and det
 
 ```bash
 npm ci
-npm run dev
 npm run typecheck
 npm run test
+npm run registry:sync
+npm run test:registry
 npm run build
+npm run dev
 npm run preview
 ```
 
@@ -57,6 +66,8 @@ npm run preview
 - `typecheck` checks package, Playground, consumer, and test TypeScript.
 - `test` runs focused component, Playground, and usage-generator tests.
 - `build` builds the library, Playground, built-package consumer, and isolated source consumer.
+- `build:playground` checks the production bundle manifest to confirm component code and raw source stay outside the initial Gallery bundle.
+- `registry:sync` updates only changed Registry SHA-256 values from canonical source bytes. Run `npm run test:registry` separately to verify; verification never writes files.
 - `preview` serves the production Playground at <http://localhost:4173>; run `npm run build` first.
 
 ## Install Envelope Reveal outside this workspace
@@ -102,6 +113,14 @@ export function Invitation() {
 The component requires React 18 or 19 and has no other runtime dependency. Keep the included MIT license notice with copies and redistributions. The Playground also shows **Workspace Usage** for examples inside this repository; those imports rely on the private package and are not an external installation path. **Source Files** remain available for inspection and manual copying.
 
 See [FrilAdd installation options](docs/friladd-integration.md) for project-local registration, the one-time explicit URL command, existing-file behavior, and reproducible Registry URLs. The [Registry Manifest](registry.json) follows FrilAdd's generic v1 format; FrilAdd has no FrilCraft-specific logic. See [Envelope Reveal](docs/components/envelope-reveal.md) for the API and [Adding components](docs/adding-components.md) for the contributor workflow.
+
+The independent distribution flow is:
+
+```text
+packages/interactive -> registry.json -> FrilAdd CLI -> Consumer React Project
+```
+
+After changing Registry source files, run `npm run registry:sync` and then `npm run test:registry`. CI runs the read-only verification and fails on stale hashes.
 
 ## Architecture
 

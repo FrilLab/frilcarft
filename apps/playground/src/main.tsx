@@ -1,6 +1,5 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import "@frillab/interactive/envelope-reveal.css";
 import "./playground.css";
 import App from "./App.js";
 

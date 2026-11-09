@@ -8,6 +8,7 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./tests/setup.ts"],
     include: [
+      "scripts/**/*.test.mjs",
       "packages/interactive/src/**/*.test.ts",
       "packages/interactive/src/**/*.test.tsx",
       "apps/playground/src/**/*.test.ts",

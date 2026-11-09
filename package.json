@@ -14,6 +14,7 @@
     "build:playground": "npm run build --workspace @frillab/playground",
     "build:consumer": "vite build --config tests/consumers/react-vite/vite.config.ts && node tests/consumers/react-vite/verify-build.mjs",
     "build:source-consumer": "node tests/consumers/source-vite/build.mjs",
+    "registry:sync": "node scripts/sync-friladd-registry.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "preview": "npm run preview --workspace @frillab/playground",

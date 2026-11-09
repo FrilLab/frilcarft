@@ -89,10 +89,17 @@ The Registry source paths resolve against that same repository revision. FrilAdd
 
 ## FrilAdd version selection
 
-Commands for users use `friladd@latest`, which follows npm's current `latest` dist-tag. That tag selects a package version; it does not promise compatibility with future major releases. The independent integration test pins FrilAdd to the currently verified version, `0.1.1`, and does not use `@latest` in automated validation. If a later release changes the CLI commands, update this guide and the Playground command generator.
+Commands for users use `friladd@latest`, which follows npm's current `latest` dist-tag. That tag selects a package version; it does not promise compatibility with future major releases. The independent integration test pins FrilAdd to the published maintenance version `0.1.2`, while Playground commands stay on `@latest`. If a later release changes the CLI commands, update this guide and the Playground command generator.
 
 ## Registry integrity and contributor workflow
 
-`registry.json` keeps the FrilAdd Registry Manifest v1 format and points directly to canonical component sources. When a source file changes, update its SHA-256 entry. `npm run test:registry` verifies every source, digest, safe destination, unique target, and consistency between installable Playground IDs and Registry items.
+`registry.json` keeps the FrilAdd Registry Manifest v1 format and points directly to canonical component sources. After changing any listed source file, run:
+
+```bash
+npm run registry:sync
+npm run test:registry
+```
+
+`registry:sync` validates paths and files and updates only changed SHA-256 values. It does not add or remove items and exits without writing when hashes already match. `test:registry` is read-only and verifies hashes, required files, safe paths, unique component IDs and target paths, and consistency between installable Playground IDs and Registry item IDs. CI runs only the verifier, so stale hashes fail instead of being silently repaired.
 
 See [FrilAdd's Registry Manifest v1 format](https://github.com/FrilLab/friladd/blob/main/docs/registry-format.md) for the independent manifest contract and [Adding components](adding-components.md) for the FrilCraft catalog workflow.

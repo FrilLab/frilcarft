@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - "registry.json"
-      - "apps/playground/src/catalog.tsx"
+      - "apps/playground/src/catalog/**"
       - "packages/interactive/src/components/envelope-reveal/**"
       - "scripts/check-friladd-add.sh"
       - ".github/workflows/friladd-integration.yml"
@@ -12,7 +12,7 @@ on:
     branches: [main]
     paths:
       - "registry.json"
-      - "apps/playground/src/catalog.tsx"
+      - "apps/playground/src/catalog/**"
       - "packages/interactive/src/components/envelope-reveal/**"
       - "scripts/check-friladd-add.sh"
       - ".github/workflows/friladd-integration.yml"
@@ -30,7 +30,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22.12.0"
-      - name: Verify published FrilAdd 0.1.1 and independent React build
+      - name: Verify published FrilAdd 0.1.2 and independent React build
         env:
           FRILADD_REGISTRY_URL: https://raw.githubusercontent.com/FrilLab/frilcraft/${{ github.event.pull_request.head.sha || github.sha }}/registry.json
         run: bash scripts/check-friladd-add.sh

@@ -4,6 +4,9 @@ import { sourceFilePlugin } from "./source-file-plugin.js";
 
 export default defineConfig({
   plugins: [sourceFilePlugin(), react()],
+  build: {
+    manifest: true,
+  },
   optimizeDeps: {
     exclude: ["@frillab/interactive"],
   },
