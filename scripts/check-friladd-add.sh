@@ -1,20 +1,34 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Real FrilAdd install test, completely outside the FrilCraft workspace.
-: "$FRILADD_BIN"
+# Exercise the published FrilAdd CLI in isolated user and project directories.
 ROOT="$PWD"
 TEMP="$(mktemp -d)"
 trap 'rm -rf "$TEMP"' EXIT
+export HOME="$TEMP/home"
+export XDG_CONFIG_HOME="$TEMP/config"
+export NPM_CONFIG_CACHE="$TEMP/npm-cache"
+export NPM_CONFIG_USERCONFIG="$TEMP/npmrc"
+mkdir -p "$HOME" "$XDG_CONFIG_HOME"
+
+FRILCRAFT_REGISTRY_URL="${FRILADD_REGISTRY_URL:-$ROOT/registry.json}"
 CONSUMER="$TEMP/consumer"
 mkdir -p "$CONSUMER"
 
-echo "Validate dry-run without project writes"
-"$FRILADD_BIN" add envelope-reveal --registry "$ROOT/registry.json" --project "$CONSUMER" --dry-run
+friladd() {
+  npx --yes friladd@0.1.1 "$@"
+}
+
+echo "Verify the pinned published CLI and register the FrilCraft Registry globally in isolated config"
+test "$(friladd --version)" = "friladd 0.1.1"
+friladd registry add frilcraft "$FRILCRAFT_REGISTRY_URL" --global --default
+
+echo "Validate dry-run through the configured default Registry without project writes"
+friladd add envelope-reveal --project "$CONSUMER" --dry-run
 test "$(find "$CONSUMER" -type f | wc -l | tr -d ' ')" = "0"
 
-echo "Install original FrilCraft component files"
-"$FRILADD_BIN" add envelope-reveal --registry "$ROOT/registry.json" --project "$CONSUMER"
+echo "Install from the default Registry without --registry"
+friladd add envelope-reveal --project "$CONSUMER"
 
 node --input-type=module - "$ROOT" "$CONSUMER" <<'NODE'
 import assert from "node:assert/strict";
@@ -43,11 +57,27 @@ for (const file of item.files) {
     "Installed bytes differ for " + file.target,
   );
 }
-console.log("FrilAdd installed the exact four declared files.");
+console.log(`FrilAdd installed all ${expected.length} manifest files with exact source bytes.`);
 NODE
 
-echo "Check that a repeated add refuses an overwrite"
-if "$FRILADD_BIN" add envelope-reveal --registry "$ROOT/registry.json" --project "$CONSUMER"; then
+echo "Check that the explicit Registry alias also installs the selected component"
+ALIAS_CONSUMER="$TEMP/alias-consumer"
+mkdir -p "$ALIAS_CONSUMER"
+friladd add frilcraft/envelope-reveal --project "$ALIAS_CONSUMER"
+node --input-type=module - "$ROOT" "$ALIAS_CONSUMER" <<'NODE'
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+const [root, consumer] = process.argv.slice(2);
+const registry = JSON.parse(readFileSync(join(root, "registry.json"), "utf8"));
+for (const file of registry.items.find(item => item.name === "envelope-reveal").files) {
+  assert.deepEqual(readFileSync(join(consumer, file.target)), readFileSync(join(root, file.source)));
+}
+console.log("Qualified alias install matches the Registry Manifest.");
+NODE
+
+echo "Check that a repeated add refuses to overwrite installed files"
+if friladd add envelope-reveal --project "$CONSUMER"; then
   echo "ERROR: repeated installation unexpectedly succeeded" >&2
   exit 1
 fi
@@ -84,6 +114,7 @@ cat > "$CONSUMER/index.html" <<'HTML'
   <body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body>
 </html>
 HTML
+mkdir -p "$CONSUMER/src"
 cat > "$CONSUMER/src/main.tsx" <<'TSX'
 import { createRoot } from "react-dom/client";
 import { EnvelopeReveal } from "./components/envelope-reveal";
@@ -96,7 +127,7 @@ createRoot(element).render(
 );
 TSX
 
-echo "Install React and build with independent consumer dependencies"
+echo "Install pinned React consumer tooling and build the independent project"
 (
   cd "$CONSUMER"
   npm install --no-audit --no-fund --save-exact \
@@ -113,21 +144,4 @@ if grep -RE '@frillab/interactive|from .three' "$CONSUMER/src/components"; then
   exit 1
 fi
 
-if [[ -n "$FRILADD_REGISTRY_URL" ]]; then
-  echo "Install from the pinned remote HTTPS manifest"
-  REMOTE="$TEMP/remote"
-  mkdir -p "$REMOTE"
-  "$FRILADD_BIN" add envelope-reveal --registry "$FRILADD_REGISTRY_URL" --project "$REMOTE"
-  node --input-type=module - "$ROOT" "$REMOTE" <<'NODE'
-import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
-const [root, remote] = process.argv.slice(2);
-const registry = JSON.parse(readFileSync(join(root, "registry.json"), "utf8"));
-for (const file of registry.items.find(i => i.name === "envelope-reveal").files) {
-  assert.deepEqual(readFileSync(join(remote, file.target)), readFileSync(join(root, file.source)));
-}
-console.log("Remote source installation matches the original files.");
-NODE
-fi
-echo "FrilAdd add and independent React consumer build passed."
+echo "FrilAdd 0.1.1 installation and independent React consumer build passed."

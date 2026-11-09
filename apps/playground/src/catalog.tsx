@@ -34,6 +34,7 @@ export interface SourceFile {
 
 interface ComponentDefinition<Props extends { [Key in keyof Props]: PlaygroundValue }> {
   readonly id: string;
+  readonly installable?: boolean;
   readonly name: string;
   readonly description: string;
   readonly category: string;
@@ -55,6 +56,7 @@ interface ComponentDefinition<Props extends { [Key in keyof Props]: PlaygroundVa
 
 export interface ComponentRegistration {
   readonly id: string;
+  readonly installable: boolean;
   readonly name: string;
   readonly description: string;
   readonly category: string;
@@ -116,6 +118,7 @@ function registerComponent<Props extends { [Key in keyof Props]: PlaygroundValue
 ): ComponentRegistration {
   return {
     id: definition.id,
+    installable: definition.installable ?? false,
     name: definition.name,
     description: definition.description,
     category: definition.category,
@@ -157,6 +160,7 @@ const envelopeRevealDefaults: EnvelopeRevealPlaygroundProps = {
 
 const envelopeReveal = registerComponent<EnvelopeRevealPlaygroundProps>({
   id: "envelope-reveal",
+  installable: true,
   name: "Envelope Reveal",
   description: "A letter animation built with React and CSS.",
   category: "Interactive",

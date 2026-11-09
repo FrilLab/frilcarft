@@ -52,6 +52,41 @@ describe("Playground", () => {
     expect(screen.getByText("Click the envelope to open it")).toBeInTheDocument();
   });
 
+  it("shows component-aware FrilAdd install instructions and the alias alternative", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    expect(screen.getByRole("heading", { name: "Install with FrilAdd" })).toBeInTheDocument();
+    expect(screen.getByText("npx --yes friladd@latest registry add frilcraft https://raw.githubusercontent.com/FrilLab/frilcraft/main/registry.json --global --default")).toBeInTheDocument();
+    expect(screen.getByText("npx --yes friladd@latest add envelope-reveal")).toBeInTheDocument();
+    expect(screen.getByText(/Run once for a global setup/)).toBeInTheDocument();
+    expect(screen.getByText(/can replace your current default Registry selection/)).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Source Files" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Workspace Usage" })).toBeInTheDocument();
+
+    await user.click(screen.getByText("Alternative: use the explicit Registry alias"));
+    expect(screen.getByText("npx --yes friladd@latest add frilcraft/envelope-reveal")).toBeInTheDocument();
+  });
+
+  it("copies registration and install commands with independent status feedback", async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Copy FrilAdd registration command" }));
+    await waitFor(() => expect(screen.getByText("Registration command copied.")).toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: "Copy Envelope Reveal install command" }));
+    await waitFor(() => expect(screen.getByText("Install command copied.")).toBeInTheDocument());
+
+    expect(writeText).toHaveBeenNthCalledWith(1, "npx --yes friladd@latest registry add frilcraft https://raw.githubusercontent.com/FrilLab/frilcraft/main/registry.json --global --default");
+    expect(writeText).toHaveBeenNthCalledWith(2, "npx --yes friladd@latest add envelope-reveal");
+    expect(screen.getByText("Registration command copied.")).toBeInTheDocument();
+  });
+
   it("updates the preview immediately and reset restores component defaults", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -144,5 +179,17 @@ describe("Playground", () => {
     await waitFor(() => {
       expect(screen.getByRole("status")).toHaveTextContent("Copy failed. Select the code in the panel and copy it manually.");
     });
+  });
+
+  it("reports clipboard failures for the install command", async () => {
+    const user = userEvent.setup();
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: vi.fn().mockRejectedValue(new Error("clipboard unavailable")) },
+    });
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Copy Envelope Reveal install command" }));
+    expect(await screen.findByText("Copy failed for install command. Select the command and copy it manually.")).toBeInTheDocument();
   });
 });

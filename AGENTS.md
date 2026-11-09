@@ -51,4 +51,4 @@ See [rendering foundations](docs/architecture/rendering-foundations.md) before c
 - Keep source files sourced from the component directory with Vite raw-file imports; do not duplicate implementation text in the Playground.
 - Label workspace package usage as private and unpublished. External usage examples must import copied local source files and their stylesheet.
 - Preserve the root MIT license in source copies. Validate both the built package consumer and the isolated source consumer with `npm run build`.
-- FrilAdd is a separate future project. Do not add a CLI, remote fetching, package installation, or Registry dependency here.
+- FrilAdd is an independent project. Do not add CLI implementation, remote fetching, package installation, or Registry resolution to FrilCraft. FrilCraft may publish a compatible Registry Manifest and display commands that invoke a versioned FrilAdd CLI; this does not add a browser runtime dependency.

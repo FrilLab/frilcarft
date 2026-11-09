@@ -59,19 +59,27 @@ npm run preview
 - `build` builds the library, Playground, built-package consumer, and isolated source consumer.
 - `preview` serves the production Playground at <http://localhost:4173>; run `npm run build` first.
 
-## Use Envelope Reveal outside this workspace
+## Install Envelope Reveal outside this workspace
 
-Copy the four files from the Playground's **Source Files** view into `src/components/envelope-reveal/`:
+[FrilAdd](https://www.npmjs.com/package/friladd) is the recommended developer-side installer. Commands use npm's `latest` dist-tag. Register FrilCraft once for your global setup:
 
-```text
-src/components/envelope-reveal/
-  EnvelopeReveal.tsx
-  index.ts
-  envelope-reveal.css
-  LICENSE
+```bash
+npx --yes friladd@latest registry add frilcraft https://raw.githubusercontent.com/FrilLab/frilcraft/main/registry.json --global --default
 ```
 
-Then use the local source path from `src/App.tsx`:
+This makes the Registry available across projects and selects FrilCraft as your default; `--default` can replace an existing default Registry selection. Omit it to keep the current default. Then run this from your project directory:
+
+```bash
+npx --yes friladd@latest add envelope-reveal
+```
+
+If you registered the alias without making it the default, use the explicit alias instead:
+
+```bash
+npx --yes friladd@latest add frilcraft/envelope-reveal
+```
+
+FrilAdd copies the selected component's declared files into your project. Use them from `src/App.tsx`:
 
 ```tsx
 import { EnvelopeReveal } from "./components/envelope-reveal";
@@ -91,13 +99,9 @@ export function Invitation() {
 }
 ```
 
-The component requires React 18 or 19 and has no other runtime dependency. Keep the included MIT license notice with copies and redistributions. The Playground also shows **Workspace Usage** for examples inside this repository; those imports rely on the private package and are not an external installation path.
+The component requires React 18 or 19 and has no other runtime dependency. Keep the included MIT license notice with copies and redistributions. The Playground also shows **Workspace Usage** for examples inside this repository; those imports rely on the private package and are not an external installation path. **Source Files** remain available for inspection and manual copying.
 
-See [Envelope Reveal](docs/components/envelope-reveal.md) for the API and [Adding components](docs/adding-components.md) for the implemented contribution workflow.
-
-## FrilAdd source installation
-
-FrilCraft publishes a [FrilAdd Registry v1 manifest](registry.json) for independently installing Envelope Reveal's source, stylesheet, barrel file, and MIT notice. [Integration instructions](docs/friladd-integration.md) include the local Rust CLI workflow and SHA-256 validation. FrilAdd's npm distribution is not assumed available yet.
+See [FrilAdd installation options](docs/friladd-integration.md) for project-local registration, the one-time explicit URL command, existing-file behavior, and reproducible Registry URLs. The [Registry Manifest](registry.json) follows FrilAdd's generic v1 format; FrilAdd has no FrilCraft-specific logic. See [Envelope Reveal](docs/components/envelope-reveal.md) for the API and [Adding components](docs/adding-components.md) for the contributor workflow.
 
 ## Architecture
 

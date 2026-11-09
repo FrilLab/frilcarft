@@ -25,7 +25,9 @@ The Playground resolves the development condition for live source updates. Produ
 
 ## 3. Register the preview and controls
 
-Add one typed registration in `apps/playground/src/catalog.tsx`. Configure the stable ID, display name, description, category, component name, package imports, copied-source imports, actual component preview, default property values, and controls. Control kinds currently include text, textarea, color, number, and boolean.
+Add one typed registration in `apps/playground/src/catalog.tsx`. Configure the stable ID, display name, description, category, component name, package imports, copied-source imports, actual component preview, default property values, controls, and whether it is installable with FrilAdd. Control kinds currently include text, textarea, color, number, and boolean.
+
+Set `installable: true` only when the component has a matching item in the root FrilAdd Registry Manifest. Leave preview-only registrations non-installable. The registry verification checks the installable catalog IDs against the manifest IDs.
 
 For example, the registration explicitly provides `componentName: "ComponentName"`, its `workspaceImportPath`, its `workspaceCssImportPath`, and a `Preview` imported from the package. Put component-specific preview badges, optional hint text, and feature notes in that same registration. The shared shell reads this metadata and does not name individual components.
 
@@ -63,7 +65,13 @@ Verify both consumer paths:
 
 Confirm DOM component output does not import Three.js. Do not add Stage/View runtime behavior for DOM components.
 
-## 7. Run the repository checks
+## 7. Register the installable source files
+
+For a component advertised as installable, add one item to the root `registry.json` using the existing FrilAdd Registry Manifest v1 format. Point each source to its canonical file under `packages/interactive/src/components/` and set the target paths to match `sourceImportPath`, `sourceCssImportPath`, and the source-copy instructions. Compute SHA-256 values from the source bytes; do not duplicate implementation files for the Registry. `npm run test:registry` checks paths, hashes, duplicate targets, and catalog/manifest ID consistency.
+
+The Playground displays FrilAdd commands using npm's `latest` dist-tag. CI independently pins and verifies FrilAdd v0.1.1. FrilAdd remains an independent generic installer; do not add its CLI implementation, registry resolution, package, or browser runtime to FrilCraft.
+
+## 8. Run the repository checks
 
 From a clean checkout, run:
 
@@ -76,4 +84,4 @@ npm run dev
 npm run preview
 ```
 
-Run the dev and preview servers long enough to confirm they serve the Playground; preview requires a production build first. Update the README and component documentation alongside public API or workflow changes. Keep the component catalog explicit and do not add discovery systems, a Registry dependency, FrilAdd, or another component solely to exercise the workflow.
+Run the dev and preview servers long enough to confirm they serve the Playground; preview requires a production build first. Update the README and component documentation alongside public API or workflow changes. Keep the component catalog explicit and do not add discovery systems, an in-app Registry resolver, or another component solely to exercise the workflow.
