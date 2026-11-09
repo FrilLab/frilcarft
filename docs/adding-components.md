@@ -27,14 +27,15 @@ Create `apps/playground/src/catalog/entries/<id>.tsx`. This component-specific f
 
 Use the shared `registerComponent` helper from `catalog/codegen.ts` to create the detail registration. Configure both the private workspace import paths and copied-source import paths. Configure each editable value once in the default properties and controls; the shared generator serializes string, number, and boolean props, omits unchanged defaults and undefined values, and produces separate workspace and copied-source examples.
 
-Then add one object to `apps/playground/src/catalog/index.ts` with only the stable ID, display name, description, category, badges, installable flag, static preview image, and lazy loader:
+Then add one object to `apps/playground/src/catalog/index.ts` with only the stable ID, display name, description, one category ID, semantic tags, technology badges, installable flag, static preview image, and lazy loader:
 
 ```ts
 {
   id: "sample-card",
   name: "Sample Card",
   description: "A reusable React card.",
-  category: "Interactive",
+  category: "interaction",
+  tags: ["click", "reveal"],
   badges: ["React", "CSS"],
   installable: false,
   previewImage: "/previews/sample-card.svg",
@@ -42,7 +43,9 @@ Then add one object to `apps/playground/src/catalog/index.ts` with only the stab
 }
 ```
 
-Do not import the component, CSS, or raw source files from this catalog. Its metadata adds a gallery card and resolves `/components/<id>` without changing `App.tsx`, `ComponentGallery.tsx`, or `ComponentDetail.tsx`. The Gallery uses the static preview image and does not mount components.
+`category` is one stable machine ID from `catalog/metadata.ts`; it describes the component's primary collection. The Gallery displays its centrally defined label and offers only categories that have registered components, plus **All**. `tags` is a nonempty list of curated semantic IDs from the same metadata module; tags are searchable and clickable, and multiple selected tags use AND matching. Add a new tag to the central vocabulary when needed, then use that ID consistently. `badges` lists noninteractive technology details such as React or CSS; badges are not search filters.
+
+Do not import the component, CSS, or raw source files from this catalog. Its metadata adds a gallery card, category option, tag filters, and `/components/<id>` route without changing `App.tsx`, `ComponentGallery.tsx`, or `ComponentDetail.tsx`. The Gallery uses the static preview image and does not mount components. Search and filters read metadata only and preserve their state in URL query parameters.
 
 ## 4. Add source-copy files and installation instructions
 
@@ -65,7 +68,7 @@ npm run test:registry
 
 ## 6. Validate the package and Playground
 
-Add focused tests for component behavior, accessibility, properties, and lifecycle. Verify the installed package and copied-source consumer with `npm run build`. The Playground build also checks its Vite production manifest: the initial Gallery's static module graph must not include component implementations, component-specific CSS, raw source text, or Three.js; the component detail must appear in its own dynamic chunk.
+Add focused tests for component behavior, accessibility, properties, and lifecycle. Verify the installed package and copied-source consumer with `npm run build`. The Playground build also checks its Vite production manifest: the initial Gallery's static module graph must not include component implementations, component-specific CSS, raw source text, or Three.js; the component detail must appear in its own dynamic chunk. Gallery filtering must not call detail loaders.
 
 The current consumer fixtures are explicit Envelope Reveal examples. When adding a component, include its built-package import and CSS checks in `tests/consumers/react-vite/` and its real copied files in `tests/consumers/source-vite/build.mjs`; keep those consumers isolated from the private workspace package where appropriate. Update the FrilAdd integration workflow paths if it must run for the new source files.
 

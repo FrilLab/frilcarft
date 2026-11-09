@@ -25,9 +25,9 @@ Playground App
                 +-- FrilAdd commands
 ```
 
-`apps/playground/src/catalog/index.ts` contains the small list needed by the gallery and route lookup. Each entry has an explicit dynamic loader. `/components/<id>` resolves metadata first; only then does `ComponentDetail.tsx` load that component's entry. The detail entry imports the actual package component, its component CSS, controls and defaults, shared code generation, and the canonical source text. Loading failures can be retried, and stale asynchronous loads are ignored after navigation.
+`apps/playground/src/catalog/index.ts` contains the small list needed by the gallery and route lookup. Each entry has an explicit dynamic loader and required category and tag metadata. `catalog/metadata.ts` defines the central category labels and curated semantic tag vocabulary; technology badges remain informational. `catalog/filter.ts` builds the categories and tags used by the Gallery from registered entries, filters metadata in memory, and reads and writes shareable query state. Search and filtering never call a detail loader. `/components/<id>` resolves metadata first; only then does `ComponentDetail.tsx` load that component's entry. The detail entry imports the actual package component, its component CSS, controls and defaults, shared code generation, and the canonical source text. Loading failures can be retried, and stale asynchronous loads are ignored after navigation.
 
-`ComponentGallery.tsx` renders static preview artwork and metadata, so opening `/` does not mount component implementations or load component source text. Vite's production manifest check verifies that Envelope Reveal code and source text remain outside the initial JavaScript graph and that its detail entry is emitted dynamically.
+`ComponentGallery.tsx` renders static preview artwork and metadata, so opening `/` does not mount component implementations or load component source text. Cards link to detail pages and expose clickable semantic tags. Vite's production manifest check verifies that Envelope Reveal code and source text remain outside the initial JavaScript graph and that its detail entry is emitted dynamically.
 
 ## Distribution flow
 
@@ -50,6 +50,8 @@ The package source remains canonical. `registry.json` identifies source and targ
 
 - `packages/interactive/` contains the reusable React components and explicit library build configuration.
 - `apps/playground/src/catalog/index.ts` contains only gallery metadata and detail loaders.
+- `apps/playground/src/catalog/metadata.ts` centralizes stable category IDs, category labels, and curated semantic tags.
+- `apps/playground/src/catalog/filter.ts` generates available filters and searches catalog metadata without loading details.
 - `apps/playground/src/catalog/entries/` contains component-specific Playground configuration and imports.
 - `apps/playground/src/catalog/codegen.ts` contains generic registration and usage-code serialization.
 - `apps/playground/src/ComponentDetail.tsx` owns shared lazy loading and editor UI.

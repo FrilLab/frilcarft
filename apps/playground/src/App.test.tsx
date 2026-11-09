@@ -1,6 +1,6 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import ts from "typescript";
+import ts from "typescript-api";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App.js";
 import { componentCatalog } from "./catalog/index.js";
@@ -10,38 +10,39 @@ async function renderDetail() {
   await screen.findByRole("button", { name: "Open the letter" });
 }
 
+async function historyMove(direction: "back" | "forward") {
+  await act(async () => {
+    await new Promise<void>((resolve) => {
+      window.addEventListener("popstate", () => resolve(), { once: true });
+      window.history[direction]();
+    });
+  });
+}
+
 describe("Playground", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     window.history.replaceState(null, "", "/components/envelope-reveal");
   });
 
-  it("opens with the registered component gallery and navigates to details and back", async () => {
+  it("opens the editorial gallery and navigates to details and back", async () => {
     const user = userEvent.setup();
     window.history.replaceState(null, "", "/");
     render(<App />);
-    expect(screen.getByRole("heading", { name: "Explore components." })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Small details. Made to move." })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "Explore Envelope Reveal" })).toHaveLength(1);
     expect(screen.queryByRole("button", { name: "Open the letter" })).not.toBeInTheDocument();
+    expect(screen.queryByText("WORKSPACE")).not.toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Main navigation" })).toHaveTextContent("Components");
 
     await user.click(screen.getByRole("link", { name: "Explore Envelope Reveal" }));
     expect(window.location.pathname).toBe("/components/envelope-reveal");
     expect(await screen.findByRole("button", { name: "Open the letter" })).toBeInTheDocument();
 
-    await act(async () => {
-      await new Promise<void>((resolve) => {
-        window.addEventListener("popstate", () => resolve(), { once: true });
-        window.history.back();
-      });
-    });
+    await historyMove("back");
     expect(window.location.pathname).toBe("/");
-    expect(screen.getByRole("heading", { name: "Explore components." })).toBeInTheDocument();
-    await act(async () => {
-      await new Promise<void>((resolve) => {
-        window.addEventListener("popstate", () => resolve(), { once: true });
-        window.history.forward();
-      });
-    });
+    expect(screen.getByRole("heading", { name: "Small details. Made to move." })).toBeInTheDocument();
+    await historyMove("forward");
     expect(await screen.findByRole("button", { name: "Open the letter" })).toBeInTheDocument();
   });
 
@@ -63,10 +64,73 @@ describe("Playground", () => {
     await renderDetail();
 
     expect(componentCatalog.map(({ id }) => id)).toEqual(["envelope-reveal"]);
-    expect(screen.getByRole("navigation", { name: "Components" })).toHaveTextContent("Envelope Reveal");
+    expect(screen.getByRole("navigation", { name: "Breadcrumb" })).toHaveTextContent("All components");
+    expect(screen.getByRole("heading", { name: "Try the preview" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Interaction" })).toHaveAttribute("href", "/?category=interaction");
     expect(screen.getByRole("button", { name: "Open the letter" })).toBeInTheDocument();
     expect(document.querySelector(".fc-envelope__message")).toHaveTextContent("A little something, just for you.");
     expect(screen.getByText("Click the envelope to open it")).toBeInTheDocument();
+  });
+
+  it("filters the gallery from lightweight metadata and keeps detail loading lazy", async () => {
+    const load = vi.spyOn(componentCatalog[0]!, "load");
+    window.history.replaceState(null, "", "/");
+    const user = userEvent.setup();
+    render(<App />);
+
+    expect(screen.getByRole("status")).toHaveTextContent("1 component");
+    expect(screen.getByRole("button", { name: "Interaction" })).toHaveAttribute("aria-pressed", "false");
+    expect(load).not.toHaveBeenCalled();
+
+    await user.type(screen.getByRole("searchbox", { name: "Find a component" }), " INVITATION ");
+    expect(screen.getAllByRole("link", { name: "Explore Envelope Reveal" })).toHaveLength(1);
+    expect(window.location.search).toContain("q=INVITATION");
+    expect(load).not.toHaveBeenCalled();
+
+    await user.clear(screen.getByRole("searchbox", { name: "Find a component" }));
+    const card = screen.getByRole("article");
+    await user.click(within(card).getByRole("button", { name: "Reveal" }));
+    expect(window.location.search).toBe("?tag=reveal");
+    expect(within(card).getByRole("button", { name: "Reveal" })).toHaveAttribute("aria-pressed", "true");
+    expect(load).not.toHaveBeenCalled();
+  });
+
+  it("combines accessible filters, reports empty results, and clears them", async () => {
+    window.history.replaceState(null, "", "/");
+    const user = userEvent.setup();
+    render(<App />);
+
+    const interaction = screen.getByRole("button", { name: "Interaction" });
+    interaction.focus();
+    await user.keyboard("{Enter}");
+    expect(interaction).toHaveAttribute("aria-pressed", "true");
+    expect(window.location.search).toBe("?category=interaction");
+
+    await user.type(screen.getByRole("searchbox", { name: "Find a component" }), "no such component");
+    expect(screen.getByRole("heading", { name: "No components found" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Clear all filters" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Clear all filters" }));
+    expect(screen.getByRole("status")).toHaveTextContent("1 component");
+    expect(window.location.search).toBe("");
+  });
+
+  it("restores category and tag state through browser back and forward", async () => {
+    window.history.replaceState(null, "", "/");
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Interaction" }));
+    await user.click(screen.getAllByRole("button", { name: "Reveal" })[0]!);
+    expect(window.location.search).toBe("?category=interaction&tag=reveal");
+    expect(screen.getAllByRole("button", { name: "Reveal" })[0]).toHaveAttribute("aria-pressed", "true");
+
+    await historyMove("back");
+    expect(window.location.search).toBe("?category=interaction");
+    expect(screen.getAllByRole("button", { name: "Reveal" })[0]).toHaveAttribute("aria-pressed", "false");
+
+    await historyMove("forward");
+    expect(window.location.search).toBe("?category=interaction&tag=reveal");
+    expect(screen.getAllByRole("button", { name: "Reveal" })[0]).toHaveAttribute("aria-pressed", "true");
   });
 
   it("shows component-aware FrilAdd install instructions and the alias alternative", async () => {

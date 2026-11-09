@@ -5,6 +5,8 @@ import {
   createFrilAddQualifiedComponentCommand,
   createFrilAddRegistrationCommand,
 } from "./lib/friladd.js";
+import { componentCategories, componentTags } from "./catalog/metadata.js";
+import { SiteLink } from "./navigation.js";
 
 type CodeView = "copied-source-usage" | "workspace-usage" | "source-files";
 type InstallCopyKey = "registration" | "install" | "qualified";
@@ -117,13 +119,24 @@ function ComponentDetailEditor({
 
   return (
     <div className="page-content">
+      <nav className="detail-breadcrumb" aria-label="Breadcrumb">
+        <SiteLink href="/">All components</SiteLink>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">{selectedComponent.name}</span>
+      </nav>
       <section className="component-heading" aria-labelledby="component-title">
         <div>
-          <div className="eyebrow-label">{selectedComponent.category} <span>·</span> React component</div>
+          <div className="detail-taxonomy">
+            <SiteLink href={`/?category=${selectedComponent.category}`}>{componentCategories[selectedComponent.category]}</SiteLink>
+            {selectedComponent.tags.map((tag) => (
+              <SiteLink className="detail-tag" key={tag} href={`/?tag=${tag}`}>{componentTags[tag]}</SiteLink>
+            ))}
+          </div>
           <h1 id="component-title">{selectedComponent.name}</h1>
           <p>{selectedComponent.description} Adjust the details and preview your changes instantly.</p>
         </div>
-        <div className="heading-badges">
+        <div className="detail-technologies" aria-label="Technology">
+          <span>Built with</span>
           {selectedComponent.badges.map((badge) => <span className="component-badge" key={badge}>{badge}</span>)}
         </div>
       </section>
@@ -132,16 +145,14 @@ function ComponentDetailEditor({
         <div className="preview-card">
           <div className="card-heading">
             <div>
-              <span className="card-kicker">PREVIEW</span>
-              <h2>Live preview</h2>
+              <span className="card-kicker">INTERACTIVE COMPONENT</span>
+              <h2>Try the preview</h2>
             </div>
-            <span className="preview-state">Preview</span>
           </div>
           <div className="preview-canvas">
-            <div className="canvas-glow" aria-hidden="true" />
             <div className="preview-component">{detail.render(values)}</div>
             {detail.previewHint && (
-              <div className="canvas-caption"><span className="caption-line" /> {detail.previewHint} <span className="caption-line" /></div>
+              <div className="canvas-caption">{detail.previewHint}</div>
             )}
           </div>
           {detail.previewFeatures.length > 0 && (
@@ -365,7 +376,7 @@ function ComponentDetailEditor({
 
       <footer className="page-footer">
         <span>FrilCraft <span aria-hidden="true">·</span> Interactive experiences, thoughtfully made.</span>
-        <span>Prototype · Not yet published</span>
+        <span>Source, usage, and installation details included.</span>
       </footer>
     </div>
   );

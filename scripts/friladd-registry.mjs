@@ -2,7 +2,8 @@ import { createHash } from "node:crypto";
 import { readFile, realpath, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import ts from "typescript";
+// TypeScript 7 supplies the CLI; its public compiler API is temporarily exposed through the TS 6 compatibility alias.
+import ts from "typescript-api";
 
 const defaultRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const componentIdPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
